@@ -10,16 +10,24 @@
 	<properties>
 		<jongo.version>1.2</jongo.version>
 		<junit.version>4.12</junit.version>
-		<jersey-container-servlet.version>2.22.2</jersey-container-servlet.version>
-		<jersey-client.version>2.22.2</jersey-client.version>
-		<jackson-jaxrs-json-provider.version>2.7.3</jackson-jaxrs-json-provider.version>
 		<hamcrest.version>1.3</hamcrest.version>
 		<jackson.version>2.5.4</jackson.version>
 		<mongo-java-driver.version>3.2.2</mongo-java-driver.version>
-		<jackson-datatype-joda.version>2.7.3</jackson-datatype-joda.version>
 		<hamcrest-junit.version>2.0.0.0</hamcrest-junit.version>
+		<jersey.version>1.8</jersey.version>
 	</properties>
+
 	<dependencies>
+		<dependency>
+			<groupId>com.sun.jersey</groupId>
+			<artifactId>jersey-server</artifactId>
+			<version>${jersey.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.sun.jersey</groupId>
+			<artifactId>jersey-json</artifactId>
+			<version>${jersey.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -27,30 +35,23 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.glassfish.jersey.containers</groupId>
-			<artifactId>jersey-container-servlet</artifactId>
-			<version>${jersey-container-servlet.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.glassfish.jersey.core</groupId>
-			<artifactId>jersey-client</artifactId>
-			<version>${jersey-client.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.jaxrs</groupId>
-			<artifactId>jackson-jaxrs-json-provider</artifactId>
-			<version>${jackson-jaxrs-json-provider.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.datatype</groupId>
-			<artifactId>jackson-datatype-joda</artifactId>
-			<version>${jackson-datatype-joda.version}</version>
-		</dependency>
-
-		<dependency>
 			<groupId>org.jongo</groupId>
 			<artifactId>jongo</artifactId>
 			<version>${jongo.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>jackson-annotations</artifactId>
+					<groupId>com.fasterxml.jackson.core</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>jackson-core</artifactId>
+					<groupId>com.fasterxml.jackson.core</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>jackson-databind</artifactId>
+					<groupId>com.fasterxml.jackson.core</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.hamcrest</groupId>
@@ -62,18 +63,27 @@
 			<artifactId>hamcrest-junit</artifactId>
 			<version>${hamcrest-junit.version}</version>
 		</dependency>
-
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-			<version>${jackson.version}</version>
-		</dependency>
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongo-java-driver</artifactId>
 			<version>${mongo-java-driver.version}</version>
 		</dependency>
-
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-joda</artifactId>
+			<version>${jackson.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>jackson-annotations</artifactId>
+					<groupId>com.fasterxml.jackson.core</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>2.7.3</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<pluginManagement>
