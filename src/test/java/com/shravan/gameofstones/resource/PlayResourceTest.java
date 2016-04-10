@@ -2,7 +2,6 @@ package com.shravan.gameofstones.resource;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.bson.types.ObjectId;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -18,28 +17,29 @@ import com.shravan.gameofstones.model.Player;
  */
 public class PlayResourceTest extends TestFramework {
 
-    private ObjectId player1Id;
-    private ObjectId player2Id;
-    private ObjectId playId;
+    private String player1Id;
+    private String player2Id;
+    private String playId;
 
     /**
      * Test is the play can be successfully started. Asserts if the {@link Play}
      * entity is persisted with corresponding details
+     * @throws Exception 
      */
     @Test
-    public void playStartTest() {
+    public void playStartTest() throws Exception {
 
         PlayResource playResource = new PlayResource();
         //create a two player game
-        Map<Integer, Player> twoPlayerGame = new HashMap<Integer, Player>();
+        Map<String, Player> twoPlayerGame = new HashMap<String, Player>();
         Player player1 = new Player("Player1");
         Player player2 = new Player("Player2");
-        twoPlayerGame.put(1, player1);
-        twoPlayerGame.put(2, player2);
+        twoPlayerGame.put("1", player1);
+        twoPlayerGame.put("2", player2);
         RestResponse twoPlayerPlayResponse = playResource.startTwoPlayerPlay(twoPlayerGame);
 
         //assert that a game is created and persisted in the db
-        Play play = Play.getPlay(new ObjectId(twoPlayerPlayResponse.getResult().toString()));
+        Play play = Play.getPlay(twoPlayerPlayResponse.getResult().toString());
         Assert.assertThat(play, Matchers.notNullValue());
         player1Id = play.getPlayer1();
         player2Id = play.getPlayer2();
@@ -50,14 +50,15 @@ public class PlayResourceTest extends TestFramework {
 
     /**
      * Simple test to make sure a game is still persists in the db with reset
+     * @throws Exception 
      */
     @Test
-    public void resetPlayTest() {
+    public void resetPlayTest() throws Exception {
 
         //start a play
         playStartTest();
         //reset a play
-        new PlayResource().resetPlay(playId.toHexString());
+        new PlayResource().resetPlay(playId);
         //assert that the play exists with ABORTED status
         Play play = Play.getPlay(playId);
         Assert.assertThat(play, Matchers.notNullValue());

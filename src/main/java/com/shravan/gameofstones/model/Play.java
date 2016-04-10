@@ -2,6 +2,7 @@ package com.shravan.gameofstones.model;
 
 import org.bson.types.ObjectId;
 import org.jongo.marshall.jackson.oid.MongoId;
+import org.jongo.marshall.jackson.oid.MongoObjectId;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.shravan.gameofstones.core.Mongodb;
 
@@ -35,19 +36,20 @@ public class Play {
     }
 
     @MongoId
-    private ObjectId id;
-    private ObjectId player1;
-    private ObjectId player2;
+    @MongoObjectId
+    private String id;
+    private String player1;
+    private String player2;
     private PlayState playState;
     private String winnerId;
 
     //getters and setters
-    public ObjectId getId() {
+    public String getId() {
 
         return id;
     }
 
-    public void setId(ObjectId id) {
+    public void setId(String id) {
 
         this.id = id;
     }
@@ -72,22 +74,22 @@ public class Play {
         this.winnerId = winnerId;
     }
 
-    public ObjectId getPlayer1() {
+    public String getPlayer1() {
 
         return player1;
     }
 
-    public void setPlayer1(ObjectId player1) {
+    public void setPlayer1(String player1) {
 
         this.player1 = player1;
     }
 
-    public ObjectId getPlayer2() {
+    public String getPlayer2() {
 
         return player2;
     }
 
-    public void setPlayer2(ObjectId player2) {
+    public void setPlayer2(String player2) {
 
         this.player2 = player2;
     }
@@ -95,6 +97,7 @@ public class Play {
     //mongo access methods
     /**
      * Create or update this instance to the mongoDb
+     * 
      * @return Returns the created/updated entity that is persisted
      */
     public Play createOrUpdate() {
@@ -109,12 +112,14 @@ public class Play {
 
     /**
      * Fetch a play by its Id
-     * @param playId PlayId to be fetched
+     * 
+     * @param playId
+     *            PlayId to be fetched
      * @return If the fetch is succesful returns the Play, else null.
      */
-    public static Play getPlay(ObjectId playId) {
+    public static Play getPlay(String playId) {
 
-        return Mongodb.getInstance().getEntity("{_id: #}", Play.class, playId);
+        return Mongodb.getInstance().getEntity("{_id: #}", Play.class, new ObjectId(playId));
     }
 
     /**

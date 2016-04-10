@@ -1,17 +1,22 @@
 package com.shravan.gameofstones.resource;
 
 import java.util.Map;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
-import org.bson.types.ObjectId;
 import com.shravan.gameofstones.core.RestResponse;
 import com.shravan.gameofstones.model.Play;
 import com.shravan.gameofstones.model.Play.PlayState;
 import com.shravan.gameofstones.model.Player;
 
 @Path("play")
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
 public class PlayResource {
 
     @GET
@@ -21,12 +26,32 @@ public class PlayResource {
         return "pong";
     }
 
+    @GET
+    @Path("{playId}")
+    public RestResponse getPlay(@PathParam("playId") String playId) throws Exception {
+
+        if (playId != null) {
+            Play play = Play.getPlay(playId);
+            if (play != null) {
+                return RestResponse.ok(play);
+            }
+            else {
+                return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(),
+                    String.format("Play for Id: %s not found", playId));
+            }
+        }
+        else {
+            return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(), "PlayId cannot be null");
+        }
+    }
+
     @POST
     @Path("start/twoPlayer")
-    public RestResponse startTwoPlayerPlay(Map<Integer, Player> twoPlayerGame) {
+    public RestResponse startTwoPlayerPlay(Map<String, Player> twoPlayerGamePlayload) throws Exception {
 
-        if (twoPlayerGame != null && twoPlayerGame.size() == 2) {
-            Play twoPlayerPlay = Play.startTwoPlayerGame(twoPlayerGame.get(1), twoPlayerGame.get(2));
+        if (twoPlayerGamePlayload != null && twoPlayerGamePlayload.size() == 2) {
+            Play twoPlayerPlay = Play.startTwoPlayerGame(twoPlayerGamePlayload.get("1"),
+                twoPlayerGamePlayload.get("2"));
             return RestResponse.ok(twoPlayerPlay.getId());
         }
         else {
@@ -40,7 +65,7 @@ public class PlayResource {
     public RestResponse resetPlay(String playId) {
 
         if (playId != null) {
-            Play play = Play.getPlay(new ObjectId(playId));
+            Play play = Play.getPlay(playId);
             if (play != null) {
                 play.setPlayState(PlayState.ABORTED);
                 play.createOrUpdate();

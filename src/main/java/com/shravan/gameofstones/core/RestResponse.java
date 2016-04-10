@@ -2,7 +2,7 @@ package com.shravan.gameofstones.core;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import com.shravan.gameofstones.util.JSONFormatter;
 
 /**
@@ -178,6 +178,7 @@ public class RestResponse {
      * 
      * @return The response that contains information about this RestResponse
      */
+    @JsonIgnore
     public Response buildResponse() {
 
         return Response.ok(getJson(), MediaType.APPLICATION_JSON).status(getCode()).build();
