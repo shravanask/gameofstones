@@ -21,4 +21,13 @@
 		<servlet-name>Rolling Stones Servlet</servlet-name>
 		<url-pattern>/*</url-pattern>
 	</servlet-mapping>
+	<servlet>
+		<servlet-name>Static Servlet</servlet-name>
+		<servlet-class>org.eclipse.jetty.servlet.DefaultServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Static Servlet</servlet-name>
+		<url-pattern>/static/*</url-pattern>
+	</servlet-mapping>
 </web-app>
