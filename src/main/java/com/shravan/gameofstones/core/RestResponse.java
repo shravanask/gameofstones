@@ -2,7 +2,7 @@ package com.shravan.gameofstones.core;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.shravan.gameofstones.util.JSONFormatter;
 
 /**
@@ -168,6 +168,7 @@ public class RestResponse {
      * @return Serialized entity
      */
     @JsonIgnore
+    @org.codehaus.jackson.annotate.JsonIgnore
     public String getJson() {
 
         return JSONFormatter.serialize(this);
