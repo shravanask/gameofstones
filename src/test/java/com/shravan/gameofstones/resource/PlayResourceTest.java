@@ -8,6 +8,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import com.shravan.gameofstones.core.RestResponse;
 import com.shravan.gameofstones.model.Play;
+import com.shravan.gameofstones.model.Play.PlayState;
 import com.shravan.gameofstones.model.Player;
 
 /**
@@ -16,6 +17,10 @@ import com.shravan.gameofstones.model.Player;
  * @author shravanshetty
  */
 public class PlayResourceTest extends TestFramework {
+
+    private ObjectId player1Id;
+    private ObjectId player2Id;
+    private ObjectId playId;
 
     /**
      * Test is the play can be successfully started. Asserts if the {@link Play}
@@ -36,5 +41,26 @@ public class PlayResourceTest extends TestFramework {
         //assert that a game is created and persisted in the db
         Play play = Play.getPlay(new ObjectId(twoPlayerPlayResponse.getResult().toString()));
         Assert.assertThat(play, Matchers.notNullValue());
+        player1Id = play.getPlayer1();
+        player2Id = play.getPlayer2();
+        playId = play.getId();
+        Assert.assertThat(Player.getPlayer(player1Id), Matchers.notNullValue());
+        Assert.assertThat(Player.getPlayer(player2Id), Matchers.notNullValue());
+    }
+
+    /**
+     * Simple test to make sure a game is still persists in the db with reset
+     */
+    @Test
+    public void resetPlayTest() {
+
+        //start a play
+        playStartTest();
+        //reset a play
+        new PlayResource().resetPlay(playId.toHexString());
+        //assert that the play exists with ABORTED status
+        Play play = Play.getPlay(playId);
+        Assert.assertThat(play, Matchers.notNullValue());
+        Assert.assertThat(play.getPlayState(), Matchers.is(PlayState.ABORTED));
     }
 }
