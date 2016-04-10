@@ -1,5 +1,6 @@
 package com.shravan.gameofstones.resource;
 
+import java.util.Arrays;
 import java.util.Map;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -34,7 +35,7 @@ public class PlayResource {
         if (playId != null) {
             Play play = Play.getPlay(playId);
             if (play != null) {
-                return RestResponse.ok(play);
+                return RestResponse.ok(play.getFullPlayDetails());
             }
             else {
                 return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(),
@@ -79,6 +80,33 @@ public class PlayResource {
         }
         else {
             return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(), "No PlayId found to reset");
+        }
+    }
+
+    @POST
+    @Path("makeMove/{playId}/{playerId}/{pitIndex}")
+    public RestResponse makeMove(@PathParam("playId") String playId, @PathParam("playerId") String playerId,
+        @PathParam("pitIndex") Integer pitIndex) {
+
+        if (playId != null) {
+            Play play = Play.getPlay(playId);
+            if (play != null && PlayState.IN_PROGRESS.equals(play.getPlayState())) {
+                if (Arrays.asList(play.getPlayer1Id(), play.getPlayer2Id()).contains(playerId)) {
+                    play.makeMove(playerId, pitIndex);
+                    return RestResponse.ok(play.getFullPlayDetails());
+                }
+                else {
+                    return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(),
+                        String.format("Given Player with id: %s not part of Play with id: %s", playerId, play.getId()));
+                }
+            }
+            else {
+                return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(), String.format(
+                    "No inprogress Play with id: %s found to make a move. State: %s", playId, play.getPlayState()));
+            }
+        }
+        else {
+            return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(), "No PlayId found to make a move");
         }
     }
 }
