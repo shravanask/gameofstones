@@ -2,6 +2,7 @@ package com.shravan.gameofstones.resource;
 
 import java.util.Map;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -60,9 +61,9 @@ public class PlayResource {
         }
     }
 
-    @POST
-    @Path("reset")
-    public RestResponse resetPlay(String playId) {
+    @DELETE
+    @Path("reset/{playId}")
+    public RestResponse resetPlay(@PathParam("playId") String playId) {
 
         if (playId != null) {
             Play play = Play.getPlay(playId);
