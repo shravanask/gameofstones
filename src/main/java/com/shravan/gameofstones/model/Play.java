@@ -38,6 +38,7 @@ public class Play {
     @MongoId
     @MongoObjectId
     private String id;
+    private String boardId;
     private String player1;
     private String player2;
     private PlayState playState;
@@ -94,6 +95,16 @@ public class Play {
         this.player2 = player2;
     }
 
+    public String getBoardId() {
+
+        return boardId;
+    }
+
+    public void setBoardId(String boardId) {
+
+        this.boardId = boardId;
+    }
+
     //mongo access methods
     /**
      * Create or update this instance to the mongoDb
@@ -137,9 +148,13 @@ public class Play {
             //save the players first
             player1.createOrUpdate();
             player2.createOrUpdate();
+            
+            //setup the board
+            Board board = Board.setupBoard(true);
 
             //update/create the play
             Play play = new Play();
+            play.setBoardId(board.getId());
             play.setPlayer1(player1.getId());
             play.setPlayer2(player2.getId());
             play.setPlayState(PlayState.IN_PROGRESS);

@@ -1,11 +1,13 @@
 package com.shravan.gameofstones.resource;
 
+import static org.junit.Assert.assertThat;
 import java.util.HashMap;
 import java.util.Map;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
 import com.shravan.gameofstones.core.RestResponse;
+import com.shravan.gameofstones.model.Board;
 import com.shravan.gameofstones.model.Play;
 import com.shravan.gameofstones.model.Play.PlayState;
 import com.shravan.gameofstones.model.Player;
@@ -44,8 +46,16 @@ public class PlayResourceTest extends TestFramework {
         player1Id = play.getPlayer1();
         player2Id = play.getPlayer2();
         playId = play.getId();
-        Assert.assertThat(Player.getPlayer(player1Id), Matchers.notNullValue());
-        Assert.assertThat(Player.getPlayer(player2Id), Matchers.notNullValue());
+        assertThat(Player.getPlayer(player1Id), Matchers.notNullValue());
+        assertThat(Player.getPlayer(player2Id), Matchers.notNullValue());
+        
+        //assert that the game board is setup with equal stones
+        Board board = Board.getBoard(play.getBoardId());
+        assertThat(board.getPlayer1Pits(), Matchers.contains(6, 6, 6, 6, 6, 6, 0));
+        assertThat(board.getPlayer2Pits(), Matchers.contains(6, 6, 6, 6, 6, 6, 0));
+        
+        //assert that the game is in progress
+        assertThat(play.getPlayState(), Matchers.is(PlayState.IN_PROGRESS));
     }
 
     /**
@@ -61,7 +71,7 @@ public class PlayResourceTest extends TestFramework {
         new PlayResource().resetPlay(playId);
         //assert that the play exists with ABORTED status
         Play play = Play.getPlay(playId);
-        Assert.assertThat(play, Matchers.notNullValue());
-        Assert.assertThat(play.getPlayState(), Matchers.is(PlayState.ABORTED));
+        assertThat(play, Matchers.notNullValue());
+        assertThat(play.getPlayState(), Matchers.is(PlayState.ABORTED));
     }
 }
