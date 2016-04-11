@@ -4,6 +4,7 @@ import static org.junit.Assert.assertThat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.ws.rs.core.Response.Status;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -45,11 +46,13 @@ public class PlayResourceTest extends TestFramework {
         RestResponse twoPlayerPlayResponse = playResource.startTwoPlayerPlay(twoPlayerGame);
 
         //assert that a game is created and persisted in the db
-        Play play = Play.getPlay(twoPlayerPlayResponse.getResult().toString());
+        assertThat(twoPlayerPlayResponse.getResult(), Matchers.notNullValue());
+        JsonNode twoPlayerPlayResponseNode = JSONFormatter.getMapper().valueToTree(twoPlayerPlayResponse.getResult());
+        playId = twoPlayerPlayResponseNode.get("id").asText();
+        Play play = Play.getPlay(playId);
         Assert.assertThat(play, Matchers.notNullValue());
         player1Id = play.getPlayer1Id();
         player2Id = play.getPlayer2Id();
-        playId = play.getId();
         assertThat(Player.getPlayer(player1Id), Matchers.notNullValue());
         assertThat(Player.getPlayer(player2Id), Matchers.notNullValue());
 
@@ -217,5 +220,58 @@ public class PlayResourceTest extends TestFramework {
         play = Play.getPlay(playId);
         assertThat(play.getPlayState(), Matchers.is(PlayState.COMPLETED));
         assertThat(play.getLeaderId(), Matchers.is(player1Id));
+    }
+
+    /**
+     * Simple test to see if the play is in {@link PlayState#WAITING} state when
+     * only the first player joins in a 2 player game
+     */
+    @Test
+    public void twoPlayerGameFirstJoinsTest() {
+
+        //setup a game with one player
+        RestResponse playWithOnePlayerResponse = new PlayResource().playerJoin(null, new Player("Player1"));
+        assertThat(playWithOnePlayerResponse.getResult(), Matchers.notNullValue());
+        JsonNode playWithOnePlayerResponseNode = JSONFormatter.getMapper()
+                                                              .valueToTree(playWithOnePlayerResponse.getResult());
+        playId = playWithOnePlayerResponseNode.get("id").asText();
+        player1Id = playWithOnePlayerResponseNode.get("player1Id").asText();
+
+        //validate that the playState is WAITING for the second user
+        assertThat(PlayState.getValue(playWithOnePlayerResponseNode.get("playState").asText()),
+            Matchers.is(PlayState.WAITING));
+        //validate that the updated play has changed. player1Id has got the chance to play
+        assertThat(playWithOnePlayerResponseNode.get("isPlayer1sMove").asBoolean(), Matchers.is(true));
+        //make sure that trying to make a move gives a PRECONDITION failure error code
+        RestResponse makeMoveWhileWaiting = new PlayResource().makeMove(playId, player1Id, 0);
+        assertThat(makeMoveWhileWaiting.getCode(), Matchers.is(Status.PRECONDITION_FAILED.getStatusCode()));
+    }
+
+    /**
+     * Simple test to see if the play is in {@link PlayState#IN_PROGRESS} state
+     * when both players have joined
+     */
+    @Test
+    public void twoPlayerGameSecondJoinsTest() {
+
+        //setup the play and make first player join
+        twoPlayerGameFirstJoinsTest();
+        //make player 2 join the game
+        RestResponse playWithTwoPlayerResponse = new PlayResource().playerJoin(playId, new Player("Player2"));
+        assertThat(playWithTwoPlayerResponse.getResult(), Matchers.notNullValue());
+        JsonNode playWithTwoPlayerResponseNode = JSONFormatter.getMapper()
+                                                              .valueToTree(playWithTwoPlayerResponse.getResult());
+        //make sure the second player joins the same game
+        assertThat(playWithTwoPlayerResponseNode.get("id").asText(), Matchers.is(playId));
+        player1Id = playWithTwoPlayerResponseNode.get("player1Id").asText();
+        player2Id = playWithTwoPlayerResponseNode.get("player2Id").asText();
+
+        //validate that the playState is WAITING for the second user
+        assertThat(PlayState.getValue(playWithTwoPlayerResponseNode.get("playState").asText()),
+            Matchers.is(PlayState.IN_PROGRESS));
+
+        //make sure that trying to make a move gives a 200 OK code
+        RestResponse makeMoveResponse = new PlayResource().makeMove(playId, player1Id, 0);
+        assertThat(makeMoveResponse.getCode(), Matchers.is(Status.OK.getStatusCode()));
     }
 }

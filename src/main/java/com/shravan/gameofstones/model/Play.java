@@ -21,7 +21,22 @@ public class Play {
     private static Logger log = Logger.getLogger(Play.class.getSimpleName());
 
     public enum PlayState {
-            IN_PROGRESS, COMPLETED, ABORTED;
+            /**
+             * Waiting for more players
+             */
+            WAITING,
+            /**
+             * Enough participants in the game. Game started.
+             */
+            IN_PROGRESS,
+            /**
+             * Game is completed
+             */
+            COMPLETED,
+            /**
+             * Game is forcefully aborted!
+             */
+            ABORTED;
 
         /**
          * Simple method to get the {@link PlayState} based on a
@@ -269,12 +284,15 @@ public class Play {
             //if first player is missing, add this given player as first
             if (play.getPlayer1() == null) {
                 play.setPlayer1Id(player.getId());
+                //update play status as WAITING as only player1 has joined
+                play.setPlayState(PlayState.WAITING);
             }
             //if player1 is already present, add as player2
             else {
                 play.setPlayer2Id(player.getId());
+                //update play status as IN_PROGRESS as both players have joined
+                play.setPlayState(PlayState.IN_PROGRESS);
             }
-            play.setPlayState(PlayState.IN_PROGRESS);
             play = play.createOrUpdate();
             return play;
         }
