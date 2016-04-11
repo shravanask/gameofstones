@@ -192,7 +192,12 @@ public class Board {
      */
     public static Board getBoard(String boardId) {
 
-        return Mongodb.getInstance().getEntity("{_id: #}", Board.class, new ObjectId(boardId));
+        if (boardId != null) {
+            return Mongodb.getInstance().getEntity("{_id: #}", Board.class, new ObjectId(boardId));
+        }
+        else {
+            return null;
+        }
     }
 
     /**

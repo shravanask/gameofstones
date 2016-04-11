@@ -204,34 +204,37 @@ public class Play {
      */
     public static Play getPlay(String playId) {
 
-        Play play = Mongodb.getInstance().getEntity("{_id: #}", Play.class, new ObjectId(playId));
-        //update play with leaderId if there are no stones left with any player
-        if (play != null) {
-            Board board = play.getBoard();
-            if (board != null) {
-                Boolean isPlayer1Winner = board.isPlayer1Winner();
-                if (isPlayer1Winner != null) {
-                    //set play leaderId
-                    if (isPlayer1Winner) {
-                        play.leaderId = play.getPlayer1Id();
+        Play play = null;
+        if (playId != null) {
+            play = Mongodb.getInstance().getEntity("{_id: #}", Play.class, new ObjectId(playId));
+            //update play with leaderId if there are no stones left with any player
+            if (play != null) {
+                Board board = play.getBoard();
+                if (board != null) {
+                    Boolean isPlayer1Winner = board.isPlayer1Winner();
+                    if (isPlayer1Winner != null) {
+                        //set play leaderId
+                        if (isPlayer1Winner) {
+                            play.leaderId = play.getPlayer1Id();
+                        }
+                        else {
+                            play.leaderId = play.getPlayer2Id();
+                        }
+                        //set play state
+                        if (board.isCompleted()) {
+                            play.setPlayState(PlayState.COMPLETED);
+                        }
                     }
                     else {
-                        play.leaderId = play.getPlayer2Id();
+                        log.info(String.format("Play winner not found for board: %s", play.getBoardId()));
                     }
-                    //set play state
-                    if (board.isCompleted()) {
-                        play.setPlayState(PlayState.COMPLETED);
-                    }
+                    //update the play
+                    play.createOrUpdate();
                 }
                 else {
-                    log.info(String.format("Play winner not found for board: %s", play.getBoardId()));
+                    log.severe(String.format("Play winner and state update failed. Board: %s is not found",
+                        play.getBoardId()));
                 }
-                //update the play
-                play.createOrUpdate();
-            }
-            else {
-                log.severe(
-                    String.format("Play winner and state update failed. Board: %s is not found", play.getBoardId()));
             }
         }
         return play;
@@ -257,7 +260,7 @@ public class Play {
             player.createOrUpdate();
 
             //setup the board, if play is null or board is not found
-            if(play == null || play.getBoardId() == null) {
+            if (play == null || play.getBoardId() == null) {
                 Board board = Board.setupBoard(true);
                 //update/create the play
                 play = play != null ? play : new Play();

@@ -93,7 +93,12 @@ public class Player {
      */
     public static Player getPlayer(String playerId) {
 
-        return Mongodb.getInstance().getEntity("{_id: #}", Player.class, new ObjectId(playerId));
+        if (playerId != null) {
+            return Mongodb.getInstance().getEntity("{_id: #}", Player.class, new ObjectId(playerId));
+        }
+        else {
+            return null;
+        }
     }
 
     /**
