@@ -2,6 +2,7 @@ package com.shravan.gameofstones.resource;
 
 import static org.junit.Assert.assertThat;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
@@ -179,10 +180,42 @@ public class PlayResourceTest extends TestFramework {
         //validate that the player1 is declared the winner as he has 2 stones against 1 of player2
         assertThat(resetPlayResponse.getResult(), Matchers.notNullValue());
         JsonNode resetPlayNode = JSONFormatter.getMapper().valueToTree(resetPlayResponse.getResult());
-        String winnerId = resetPlayNode.get("winnerId").textValue();
-        assertThat(winnerId, Matchers.is(player1Id));
+        String leaderId = resetPlayNode.get("leaderId").textValue();
+        assertThat(leaderId, Matchers.is(player1Id));
         //validate that the game is indeed aborted
         PlayState playState = PlayState.getValue(resetPlayNode.get("playState").textValue());
         assertThat(playState, Matchers.is(PlayState.ABORTED));
+    }
+
+    /**
+     * Mock a completed play to see if its details are updated with completed
+     * status
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void completedPlayTest() throws Exception {
+
+        //make initial set of moves based on the tests above
+        player2MakeFirstMoveTest();
+
+        //get the board linked to this play
+        Play play = Play.getPlay(playId);
+        assertThat(play.getPlayState(), Matchers.is(PlayState.IN_PROGRESS));
+        Board board = play.getBoard();
+
+        //update player2 with no stones left in the small pits
+        List<Integer> player2Pits = board.getPlayer2Pits();
+        for (int pitIndex = 0; pitIndex < 6; pitIndex++) {
+            player2Pits.set(pitIndex, 0);
+        }
+        //update the board
+        board.createOrUpdate();
+
+        //refetch the play with full details 
+        //validate that the play is updated with completed status and leaderId as player1
+        play = Play.getPlay(playId);
+        assertThat(play.getPlayState(), Matchers.is(PlayState.COMPLETED));
+        assertThat(play.getLeaderId(), Matchers.is(player1Id));
     }
 }

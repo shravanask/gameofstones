@@ -46,12 +46,14 @@ public class Mongodb {
         }
         return mongodb;
     }
-    
+
     /**
      * Get the jongo instance for additional db querying
+     * 
      * @return Jongo instance that is already instantiated
      */
     public Jongo getJongo() {
+
         return jongo;
     }
 

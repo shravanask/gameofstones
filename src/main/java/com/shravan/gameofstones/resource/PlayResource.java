@@ -67,7 +67,7 @@ public class PlayResource {
     public RestResponse resetPlay(@PathParam("playId") String playId) {
 
         if (playId != null) {
-            Play play = Play.getPlay(playId, true);
+            Play play = Play.getPlay(playId);
             if (play != null) {
                 play.setPlayState(PlayState.ABORTED);
                 play.createOrUpdate();

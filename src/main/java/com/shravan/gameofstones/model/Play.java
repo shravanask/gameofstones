@@ -49,7 +49,7 @@ public class Play {
     private String player1Id;
     private String player2Id;
     private PlayState playState;
-    private String winnerId;
+    private String leaderId;
     /**
      * Use a flag to check whose move its next. If true, its player1, else
      * player2
@@ -77,14 +77,14 @@ public class Play {
         this.playState = playState;
     }
 
-    public String getWinnerId() {
+    public String getLeaderId() {
 
-        return winnerId;
+        return leaderId;
     }
 
-    public void setWinnerId(String winnerId) {
+    public void setLeaderId(String leaderId) {
 
-        this.winnerId = winnerId;
+        this.leaderId = leaderId;
     }
 
     public String getPlayer1Id() {
@@ -192,12 +192,7 @@ public class Play {
     @JsonIgnore
     public Play createOrUpdate() {
 
-        if (getId() != null && getPlay(getId()) != null) {
-            return Mongodb.getInstance().updateEntity(this);
-        }
-        else {
-            return Mongodb.getInstance().insertEntity(this);
-        }
+        return Mongodb.getInstance().updateEntity(this);
     }
 
     /**
@@ -209,35 +204,19 @@ public class Play {
      */
     public static Play getPlay(String playId) {
 
-        return getPlay(playId, false);
-    }
-
-    /**
-     * Fetch a play by its Id.
-     * 
-     * @param playId
-     *            PlayId to be fetched
-     * @param checkForEnd
-     *            Set to true, if {@link Play#winnerId} and
-     *            {@link Play#playState} has to be updated for this play. This
-     *            will also update the {@link Play} entity
-     * @return If the fetch is succesful returns the Play, else null.
-     */
-    public static Play getPlay(String playId, boolean checkForEnd) {
-
         Play play = Mongodb.getInstance().getEntity("{_id: #}", Play.class, new ObjectId(playId));
-        //update play with winnerId if there are no stones left with any player
-        if (play != null && checkForEnd) {
+        //update play with leaderId if there are no stones left with any player
+        if (play != null) {
             Board board = play.getBoard();
             if (board != null) {
                 Boolean isPlayer1Winner = board.isPlayer1Winner();
                 if (isPlayer1Winner != null) {
-                    //set play winnerId
+                    //set play leaderId
                     if (isPlayer1Winner) {
-                        play.winnerId = play.getPlayer1Id();
+                        play.leaderId = play.getPlayer1Id();
                     }
                     else {
-                        play.winnerId = play.getPlayer2Id();
+                        play.leaderId = play.getPlayer2Id();
                     }
                     //set play state
                     if (board.isCompleted()) {
@@ -297,7 +276,7 @@ public class Play {
      * @param pitIndex
      *            The 0-based pit index on which the Player is making his move
      * @return Returns the updated Play with {@link Play#playState} and
-     *         {@link Play#winnerId}.
+     *         {@link Play#leaderId}.
      */
     public void makeMove(String playerId, Integer pitIndex) {
 
@@ -338,9 +317,9 @@ public class Play {
         }
         createOrUpdate();
         //check for playState and winner updates
-        Play play = getPlay(getId(), true);
+        Play play = getPlay(getId());
         //update the current instance
-        this.winnerId = play.getWinnerId();
+        this.leaderId = play.getLeaderId();
         this.playState = play.getPlayState();
     }
 }

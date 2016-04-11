@@ -133,7 +133,8 @@ public class Board {
 
         boolean isStonesLeftForPlayer1 = isStonesLeft(player1Pits);
         boolean isStonesLeftForPlayer2 = isStonesLeft(player2Pits);
-        return !isStonesLeftForPlayer1 && !isStonesLeftForPlayer2;
+        //if either player1 or player2 has no stones left, then game is completed
+        return !isStonesLeftForPlayer1 || !isStonesLeftForPlayer2;
     }
 
     //private methods
