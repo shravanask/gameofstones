@@ -104,7 +104,9 @@ public class PlayResourceTest extends TestFramework {
     }
 
     /**
-     * Simple test to validate a player1s second move following his first move to get back the attempt
+     * Simple test to validate a player1s second move following his first move
+     * to get back the attempt
+     * 
      * @throws Exception
      */
     @Test
@@ -129,9 +131,11 @@ public class PlayResourceTest extends TestFramework {
         assertThat(player1.getMoves(), Matchers.is(2));
         assertThat(player2.getMoves(), Matchers.is(0));
     }
-    
+
     /**
-     * Simple test to validate a player 2's first move following the player1's first two moves
+     * Simple test to validate a player 2's first move following the player1's
+     * first two moves
+     * 
      * @throws Exception
      */
     @Test
@@ -156,5 +160,29 @@ public class PlayResourceTest extends TestFramework {
         Player player2 = play.getPlayer2();
         assertThat(player1.getMoves(), Matchers.is(2));
         assertThat(player2.getMoves(), Matchers.is(1));
+    }
+
+    /**
+     * Test to validate if Winner of the game is the player who has the most
+     * stones in his big pit.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void playResetAfterFewMoves() throws Exception {
+
+        //make initial set of moves based on the tests above
+        player2MakeFirstMoveTest();
+        //abort the game
+        RestResponse resetPlayResponse = new PlayResource().resetPlay(playId);
+
+        //validate that the player1 is declared the winner as he has 2 stones against 1 of player2
+        assertThat(resetPlayResponse.getResult(), Matchers.notNullValue());
+        JsonNode resetPlayNode = JSONFormatter.getMapper().valueToTree(resetPlayResponse.getResult());
+        String winnerId = resetPlayNode.get("winnerId").textValue();
+        assertThat(winnerId, Matchers.is(player1Id));
+        //validate that the game is indeed aborted
+        PlayState playState = PlayState.getValue(resetPlayNode.get("playState").textValue());
+        assertThat(playState, Matchers.is(PlayState.ABORTED));
     }
 }

@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import org.bson.types.ObjectId;
 import org.jongo.marshall.jackson.oid.MongoId;
 import org.jongo.marshall.jackson.oid.MongoObjectId;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.shravan.gameofstones.core.Mongodb;
 
 /**
@@ -86,6 +87,55 @@ public class Board {
         this.player2Pits = player2Pits;
     }
 
+    /**
+     * Method to see if Player1 is the current winner of the board. Basically
+     * just checks if player1 has more stones in the big pit compared to
+     * player2.
+     * 
+     * @return True if player1 has won, false if player2 has won or null if no
+     *         winner is established (not properly setup boards or on a draw)
+     */
+    @JsonIgnore
+    public Boolean isPlayer1Winner() {
+
+        if (player1Pits != null && player1Pits.size() == 7) {
+            if (player2Pits != null && player2Pits.size() == 7) {
+                if (player1Pits.get(6) > player2Pits.get(6)) {
+                    return true;
+                }
+                if (player1Pits.get(6) == player2Pits.get(6)) {
+                    return null;
+                }
+                else {
+                    return false;
+                }
+            }
+            else {
+                log.severe(String.format("Improperly setup board. Player2 pit count: %s",
+                    player2Pits != null ? player2Pits.size() : null));
+            }
+        }
+        else {
+            log.severe(String.format("Improperly setup board. Player1 pit count: %s",
+                player1Pits != null ? player1Pits.size() : null));
+        }
+        return null;
+    }
+
+    /**
+     * Method to see if either of {@link Board#player1Pits} or
+     * {@link Board#player2Pits} has small empty pits
+     * 
+     * @return
+     */
+    @JsonIgnore
+    public boolean isCompleted() {
+
+        boolean isStonesLeftForPlayer1 = isStonesLeft(player1Pits);
+        boolean isStonesLeftForPlayer2 = isStonesLeft(player2Pits);
+        return !isStonesLeftForPlayer1 && !isStonesLeftForPlayer2;
+    }
+
     //private methods
     /**
      * Simple method to setup 6 stones in the small pit and no stones in the big
@@ -101,6 +151,26 @@ public class Board {
         //put 6 stones to all intial 6 pits and 0 in the last big pit
         playerPits = Arrays.asList(6, 6, 6, 6, 6, 6, 0);
         return playerPits;
+    }
+
+    /**
+     * Simple method to check if any stone is left in a players small pits
+     */
+    private boolean isStonesLeft(List<Integer> playerPits) {
+
+        if (playerPits != null) {
+            for (int pitIndex = 0; pitIndex < 6; pitIndex++) {
+                if (playerPits.get(pitIndex) > 0) {
+                    return true;
+                }
+            }
+        }
+        //assume stones are left if playerPit is null. just log it
+        else {
+            log.severe("Player pit is null to check if any stones left. Returning true");
+            return true;
+        }
+        return false;
     }
 
     //mongo access methods

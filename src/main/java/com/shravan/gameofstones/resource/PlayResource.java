@@ -67,11 +67,11 @@ public class PlayResource {
     public RestResponse resetPlay(@PathParam("playId") String playId) {
 
         if (playId != null) {
-            Play play = Play.getPlay(playId);
+            Play play = Play.getPlay(playId, true);
             if (play != null) {
                 play.setPlayState(PlayState.ABORTED);
                 play.createOrUpdate();
-                return RestResponse.ok(play.getId());
+                return RestResponse.ok(play.getFullPlayDetails());
             }
             else {
                 return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(),

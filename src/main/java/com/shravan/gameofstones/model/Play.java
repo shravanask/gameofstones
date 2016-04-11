@@ -31,7 +31,7 @@ public class Play {
          * @return
          */
         @JsonCreator
-        public PlayState getValue(String playState) {
+        public static PlayState getValue(String playState) {
 
             for (PlayState state : PlayState.values()) {
                 if (state.name().equalsIgnoreCase(playState)) {
@@ -201,7 +201,7 @@ public class Play {
     }
 
     /**
-     * Fetch a play by its Id
+     * Fetch a play by its Id.
      * 
      * @param playId
      *            PlayId to be fetched
@@ -209,7 +209,53 @@ public class Play {
      */
     public static Play getPlay(String playId) {
 
-        return Mongodb.getInstance().getEntity("{_id: #}", Play.class, new ObjectId(playId));
+        return getPlay(playId, false);
+    }
+
+    /**
+     * Fetch a play by its Id.
+     * 
+     * @param playId
+     *            PlayId to be fetched
+     * @param checkForEnd
+     *            Set to true, if {@link Play#winnerId} and
+     *            {@link Play#playState} has to be updated for this play. This
+     *            will also update the {@link Play} entity
+     * @return If the fetch is succesful returns the Play, else null.
+     */
+    public static Play getPlay(String playId, boolean checkForEnd) {
+
+        Play play = Mongodb.getInstance().getEntity("{_id: #}", Play.class, new ObjectId(playId));
+        //update play with winnerId if there are no stones left with any player
+        if (play != null && checkForEnd) {
+            Board board = play.getBoard();
+            if (board != null) {
+                Boolean isPlayer1Winner = board.isPlayer1Winner();
+                if (isPlayer1Winner != null) {
+                    //set play winnerId
+                    if (isPlayer1Winner) {
+                        play.winnerId = play.getPlayer1Id();
+                    }
+                    else {
+                        play.winnerId = play.getPlayer2Id();
+                    }
+                    //set play state
+                    if (board.isCompleted()) {
+                        play.setPlayState(PlayState.COMPLETED);
+                    }
+                }
+                else {
+                    log.info(String.format("Play winner not found for board: %s", play.getBoardId()));
+                }
+                //update the play
+                play.createOrUpdate();
+            }
+            else {
+                log.severe(
+                    String.format("Play winner and state update failed. Board: %s is not found", play.getBoardId()));
+            }
+        }
+        return play;
     }
 
     /**
@@ -250,6 +296,8 @@ public class Play {
      *            PlayerId who is performing the move
      * @param pitIndex
      *            The 0-based pit index on which the Player is making his move
+     * @return Returns the updated Play with {@link Play#playState} and
+     *         {@link Play#winnerId}.
      */
     public void makeMove(String playerId, Integer pitIndex) {
 
@@ -289,5 +337,10 @@ public class Play {
             log.severe("Cannot perform move. PlayerId is null. Ignoring move");
         }
         createOrUpdate();
+        //check for playState and winner updates
+        Play play = getPlay(getId(), true);
+        //update the current instance
+        this.winnerId = play.getWinnerId();
+        this.playState = play.getPlayState();
     }
 }
