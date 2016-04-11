@@ -12,8 +12,8 @@ public class Player {
     private String id;
     private String name;
     private Integer score;
-    private Integer moves;
-    private Boolean isWinner;
+    private Integer moves = 0;
+    private Boolean isWinner = false;
 
     //simple constructors
     public Player() {
@@ -93,6 +93,23 @@ public class Player {
      */
     public static Player getPlayer(String playerId) {
 
-        return Mongodb.getInstance().getEntity("{_id: #}", Player.class, new ObjectId(playerId));
+        if (playerId != null) {
+            return Mongodb.getInstance().getEntity("{_id: #}", Player.class, new ObjectId(playerId));
+        }
+        else {
+            return null;
+        }
+    }
+
+    /**
+     * Simple method to increment the move counter for this Player
+     */
+    public void addMove(boolean updateDb) {
+
+        moves = moves != null ? moves : 0;
+        moves++;
+        if (updateDb) {
+            createOrUpdate();
+        }
     }
 }

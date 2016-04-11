@@ -19,6 +19,7 @@ public class JSONFormatter {
 
     /**
      * Serializes the given object instance
+     * 
      * @param objectToBeSerialized
      * @return
      */
