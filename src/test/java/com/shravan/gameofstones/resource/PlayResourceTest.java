@@ -80,7 +80,7 @@ public class PlayResourceTest extends TestFramework {
     }
 
     /**
-     * Simple test to validate a player move
+     * Simple test to validate a player1 move
      * 
      * @throws Exception
      */
@@ -95,10 +95,16 @@ public class PlayResourceTest extends TestFramework {
         //validate that the updated play has changed. player1Id has got the chance again
         JsonNode makeMoveResponseNode = JSONFormatter.getMapper().valueToTree(makeMoveResponse.getResult());
         assertThat(makeMoveResponseNode.get("isPlayer1sMove").asBoolean(), Matchers.is(true));
+        //assert that player1 has made one moves and player2 has none
+        Play play = Play.getPlay(playId);
+        Player player1 = play.getPlayer1();
+        Player player2 = play.getPlayer2();
+        assertThat(player1.getMoves(), Matchers.is(1));
+        assertThat(player2.getMoves(), Matchers.is(0));
     }
 
     /**
-     * Simple test to validate a players second move following his first move to get back the attempt
+     * Simple test to validate a player1s second move following his first move to get back the attempt
      * @throws Exception
      */
     @Test
@@ -109,12 +115,46 @@ public class PlayResourceTest extends TestFramework {
         RestResponse makeMoveResponse = new PlayResource().makeMove(playId, player1Id, 1);
         assertThat(makeMoveResponse.getResult(), Matchers.notNullValue());
         JsonNode makeMoveResponseNode = JSONFormatter.getMapper().valueToTree(makeMoveResponse.getResult());
-        //validate that the updated play has changed. player1Id has not the chance again.
+        //validate that the play has changed. player1Id has not got the chance again.
         assertThat(makeMoveResponseNode.get("isPlayer1sMove").asBoolean(), Matchers.is(false));
         //but has got all the stones from the opponent player
         Board currentPlayBoard = JSONFormatter.deserialize(makeMoveResponseNode.get("board").toString(), false,
             Board.class);
         assertThat(currentPlayBoard.getPlayer1Pits(), Matchers.contains(1, 7, 8, 8, 8, 8, 2));
         assertThat(currentPlayBoard.getPlayer2Pits(), Matchers.contains(6, 6, 6, 6, 0, 6, 0));
+        //assert that player1 has made two moves and player2 has none
+        Play play = Play.getPlay(playId);
+        Player player1 = play.getPlayer1();
+        Player player2 = play.getPlayer2();
+        assertThat(player1.getMoves(), Matchers.is(2));
+        assertThat(player2.getMoves(), Matchers.is(0));
+    }
+    
+    /**
+     * Simple test to validate a player 2's first move following the player1's first two moves
+     * @throws Exception
+     */
+    @Test
+    public void player2MakeFirstMoveTest() throws Exception {
+
+        //start and make player1 move's as above tests
+        makeSecondMoveTest();
+        //make player2 move
+        RestResponse makeMoveResponse = new PlayResource().makeMove(playId, player2Id, 5);
+        assertThat(makeMoveResponse.getResult(), Matchers.notNullValue());
+        JsonNode makeMoveResponseNode = JSONFormatter.getMapper().valueToTree(makeMoveResponse.getResult());
+        //validate that the play has changed. player1Id has the chance again.
+        assertThat(makeMoveResponseNode.get("isPlayer1sMove").asBoolean(), Matchers.is(true));
+        //but has got all the stones from the opponent player
+        Board currentPlayBoard = JSONFormatter.deserialize(makeMoveResponseNode.get("board").toString(), false,
+            Board.class);
+        assertThat(currentPlayBoard.getPlayer1Pits(), Matchers.contains(1, 0, 8, 8, 8, 8, 2));
+        assertThat(currentPlayBoard.getPlayer2Pits(), Matchers.contains(7, 7, 7, 7, 8, 0, 1));
+        //assert that player1 has made two moves and player2 has one
+        Play play = Play.getPlay(playId);
+        Player player1 = play.getPlayer1();
+        Player player2 = play.getPlayer2();
+        assertThat(player1.getMoves(), Matchers.is(2));
+        assertThat(player2.getMoves(), Matchers.is(1));
     }
 }

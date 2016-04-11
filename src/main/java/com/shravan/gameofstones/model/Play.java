@@ -116,7 +116,7 @@ public class Play {
 
         this.boardId = boardId;
     }
-    
+
     /**
      * If true, its player1's chance to play next, else player2's
      * 
@@ -134,6 +134,36 @@ public class Play {
         this.isPlayer1sMove = isPlayer1sMove;
     }
 
+    @JsonIgnore
+    public Player getPlayer1() {
+
+        if (player1Id != null) {
+            return Player.getPlayer(player1Id);
+        }
+        log.warning("PlayerId1 is null");
+        return null;
+    }
+
+    @JsonIgnore
+    public Player getPlayer2() {
+
+        if (player2Id != null) {
+            return Player.getPlayer(player2Id);
+        }
+        log.warning("PlayerId2 is null");
+        return null;
+    }
+
+    @JsonIgnore
+    public Board getBoard() {
+
+        if (boardId != null) {
+            return Board.getBoard(boardId);
+        }
+        log.warning("BoardId is null");
+        return null;
+    }
+
     //mongo access methods
 
     /**
@@ -147,13 +177,10 @@ public class Play {
 
         ObjectNode playNode = JSONFormatter.getMapper().valueToTree(this);
         //fetch player details
-        Player player1 = Player.getPlayer(this.player1Id);
-        Player player2 = Player.getPlayer(this.player2Id);
-        playNode.putPOJO("player1", player1);
-        playNode.putPOJO("player2", player2);
+        playNode.putPOJO("player1", getPlayer1());
+        playNode.putPOJO("player2", getPlayer2());
         //fetch board details
-        Board board = Board.getBoard(boardId);
-        playNode.putPOJO("board", board);
+        playNode.putPOJO("board", getBoard());
         return playNode;
     }
 
@@ -232,9 +259,25 @@ public class Play {
             if (board != null) {
                 if (playerId.equalsIgnoreCase(player1Id)) {
                     isPlayer1sMove = board.makeMove(true, pitIndex);
+                    //update player1 move counter
+                    Player player1 = getPlayer1();
+                    if (player1 != null) {
+                        player1.addMove(true);
+                    }
+                    else {
+                        log.severe(String.format("Player1: %s not found. Move count not updated", player1Id));
+                    }
                 }
                 else if (player2Id.equalsIgnoreCase(player2Id)) {
-                    isPlayer1sMove = board.makeMove(false, pitIndex);
+                    isPlayer1sMove = !board.makeMove(false, pitIndex);
+                    //update player2 move counter
+                    Player player2 = getPlayer2();
+                    if (player2 != null) {
+                        player2.addMove(true);
+                    }
+                    else {
+                        log.severe(String.format("Player1: %s not found. Move count not updated", player2Id));
+                    }
                 }
             }
             else {
