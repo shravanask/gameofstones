@@ -238,6 +238,47 @@ public class Play {
     }
 
     /**
+     * Add a player to an existing or create a new play if missing
+     * 
+     * @param play
+     *            Information about the play the player is joining. If null,
+     *            creates a new play. Else, checks if there is atleast one slot
+     *            for the given player to join. So {@link Play#player1Id} or
+     *            {@link Play#player2Id} is null.
+     * @param player
+     *            Information about the player joining the given play
+     * @return Returns a {@link Play} that is setup between player1 and player2
+     */
+    public static Play addPlayerInPlay(Play play, Player player) {
+
+        //make sure the given play is either null, or contains atleast one slot for this player
+        if (player != null && (play == null || play.getPlayer1() == null || play.getPlayer2Id() == null)) {
+            //save the player first
+            player.createOrUpdate();
+
+            //setup the board, if play is null or board is not found
+            if(play == null || play.getBoardId() == null) {
+                Board board = Board.setupBoard(true);
+                //update/create the play
+                play = play != null ? play : new Play();
+                play.setBoardId(board.getId());
+            }
+            //if first player is missing, add this given player as first
+            if (play.getPlayer1() == null) {
+                play.setPlayer1Id(player.getId());
+            }
+            //if player1 is already present, add as player2
+            else {
+                play.setPlayer2Id(player.getId());
+            }
+            play.setPlayState(PlayState.IN_PROGRESS);
+            play = play.createOrUpdate();
+            return play;
+        }
+        return null;
+    }
+
+    /**
      * Persist a game in the database
      * 
      * @param player1
