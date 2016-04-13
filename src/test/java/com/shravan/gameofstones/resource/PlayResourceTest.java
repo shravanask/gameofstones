@@ -225,12 +225,16 @@ public class PlayResourceTest extends TestFramework {
     /**
      * Simple test to see if the play is in {@link PlayState#WAITING} state when
      * only the first player joins in a 2 player game
+     * 
+     * @throws Exception
      */
     @Test
-    public void twoPlayerGameFirstJoinsTest() {
+    public void twoPlayerGameFirstJoinsTest() throws Exception {
 
         //setup a game with one player
-        RestResponse playWithOnePlayerResponse = new PlayResource().playerJoin(null, new Player("Player1"));
+        String playWithOnePlayerResponseString = new PlayResource().playerJoin(null, new Player("Player1"));
+        RestResponse playWithOnePlayerResponse = JSONFormatter.deserialize(playWithOnePlayerResponseString, false,
+            RestResponse.class);
         assertThat(playWithOnePlayerResponse.getResult(), Matchers.notNullValue());
         JsonNode playWithOnePlayerResponseNode = JSONFormatter.getMapper()
                                                               .valueToTree(playWithOnePlayerResponse.getResult());
@@ -250,14 +254,18 @@ public class PlayResourceTest extends TestFramework {
     /**
      * Simple test to see if the play is in {@link PlayState#IN_PROGRESS} state
      * when both players have joined
+     * 
+     * @throws Exception
      */
     @Test
-    public void twoPlayerGameSecondJoinsTest() {
+    public void twoPlayerGameSecondJoinsTest() throws Exception {
 
         //setup the play and make first player join
         twoPlayerGameFirstJoinsTest();
         //make player 2 join the game
-        RestResponse playWithTwoPlayerResponse = new PlayResource().playerJoin(playId, new Player("Player2"));
+        String playWithTwoPlayerResponseString = new PlayResource().playerJoin(playId, new Player("Player2"));
+        RestResponse playWithTwoPlayerResponse = JSONFormatter.deserialize(playWithTwoPlayerResponseString, false,
+            RestResponse.class);
         assertThat(playWithTwoPlayerResponse.getResult(), Matchers.notNullValue());
         JsonNode playWithTwoPlayerResponseNode = JSONFormatter.getMapper()
                                                               .valueToTree(playWithTwoPlayerResponse.getResult());

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Game of Stones</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Claim the throne, by capturing the stone!">
+<meta name="author" content="Shravan Shetty">
+
+<!-- Le styles -->
+<link href="static/public/src/css/bootstrap.css" rel="stylesheet">
+<link href="static/public/src/css/responsive.css" rel="stylesheet">
+<!-- sticker footer -->
+<style type="text/css">
+html, body {
+	height: 100%;
+	/* The html and body elements cannot have any padding or margin. */
+}
+body {
+	/*padding-top: 80px;*/
+	padding-bottom: 40px;
+}
+/* Wrapper for page content to push down footer */
+#wrap {
+	min-height: 100%;
+	height: auto !important;
+	height: 100%;
+	/* Negative indent footer by it's height */
+	margin: 0 auto -60px;
+}
+/* Set the fixed height of the footer here */
+#push, #footer {
+	height: 20px;
+}
+#footer {
+	background-color: #433c2d;
+}
+/* Lastly, apply responsive CSS fixes as necessary */
+@media ( max-width : 767px) {
+	#footer {
+		margin-left: -20px;
+		margin-right: -20px;
+		padding-left: 20px;
+		padding-right: 20px;
+	}
+}
+</style>
+<!-- Fav and touch icons -->
+<link rel="shortcut icon"
+	href="static/public/src/img/ico/favicon.jpeg">
+<link rel="apple-touch-icon-precomposed" sizes="144x144"
+	href="static/public/src/img/ico/apple-touch-icon-144-precomposed.png">
+<link rel="apple-touch-icon-precomposed" sizes="114x114"
+	href="static/public/src/img/ico/apple-touch-icon-114-precomposed.png">
+<link rel="apple-touch-icon-precomposed" sizes="72x72"
+	href="static/public/src/img/ico/apple-touch-icon-72-precomposed.png">
+<link rel="apple-touch-icon-precomposed"
+	href="static/public/src/img/ico/apple-touch-icon-57-precomposed.png">
+</head>
+
+<body>
+
+	<div id="wrap">
+		<div class="row">
+			<div class="navbar" style="margin-bottom: 0px; padding-left: 35px">
+				<table>
+					<tbody>
+						<tr>
+							<td><img src="static/public/src/img/game_of_stones.jpg"
+								alt="ASK-Fast" width="300px" style="height: 100px"></td>
+							<td>
+								<table class="table table-bordered table-striped"
+									style="margin-bottom: 0px; max-width: 50%">
+									<thead id="pointsTableHeader" style="font-weight: bold">
+										<tr>
+											<th>Name</th>
+											<th>Points</th>
+											<th>Moves</th>
+										</tr>
+									</thead>
+									<tbody id="pointsTable" style="color: black">
+										<tr>
+											<td id="player1Name"></td>
+											<td id="player1Points"></td>
+											<td id="player1Moves"></td>
+										</tr>
+										<tr>
+											<td id="player2Name"></td>
+											<td id="player2Points"></td>
+											<td id="player2Moves"></td>
+										</tr>
+									</tbody>
+								</table>
+							</td>
+							<td>
+								<label style="color: black;">Game Status:</label> 
+								<label id="playState" style="color: black">IDLE</label>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<form class="well">
+				<div class="container">
+					<div class="span2">
+						<label>Player Name:</label> <input type="text" id="playerName" value="Player1">
+					</div>
+					<div class="span1"></div>
+					<table>
+						<tbody>
+							<tr>
+								<td>
+									<div class="span2">
+										<label style="visibility: hidden">Actions</label>
+										<button class="btn btn-primary" id="joinGame" type="button">Join</button>
+										<button class="btn btn-inverse" id="abort" type="reset" disabled="disabled">
+											Abort!</button>
+									</div>
+								</td>
+								<td><label style="visibility: hidden">Actions</label>
+									<div class="span5" align="center"
+										style="text-align: left;" id="lookUpMessage">
+									</div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</form>
+		</div>
+		<div id="push"></div>
+		<div id="footer">
+			<div class="container">
+				<p class="muted credit" align="center">&copy; Game of Stones by Shravan 2016</p>
+			</div>
+		</div>
+	</div>
+
+
+	<!-- Le javascript
+================================================== -->
+	<!-- Placed at the end of the document so the pages load faster -->
+	<script src="static/public/src/js/libs/jquery/jquery.js"></script>
+	<script>
+    $(document).ready(function () {
+    	
+        function supports_html5_storage() {
+            try {
+                return 'localStorage' in window && window['localStorage'] !== null;
+            } catch (e) {
+                return false;
+            }
+        }
+        supports_html5_storage();
+        if(localStorage.getItem("playId")) {
+        	$('#lookUpMessage').html("Play: " + localStorage.getItem("playId") + " already started!");
+        	if(localStorage.getItem("player2Id")) {
+        		$('#lookUpMessage').html("Existing players found!");	
+        		$('#joinGame').prop('disabled', true);
+        	}
+        	else if(localStorage.getItem("player1Id")) {
+        		$('#lookUpMessage').html("Only player1 found! Add another player.");
+        	}
+        	//update game names
+        	updatePointsTable(localStorage.getItem("player1Name"), localStorage.getItem("player1Points"), 
+        			localStorage.getItem("player1Moves"), localStorage.getItem("player2Name"), 
+        			localStorage.getItem("player2Points"), localStorage.getItem("player2Moves"), 
+        			localStorage.getItem("playState"));
+        }
+        //function for aborting a game
+        $('#abort').click(function () {
+        	if(localStorage.getItem("playId")) {
+	        	$.ajax({
+	                url: "/rest/play/reset/" + localStorage.getItem("playId"),
+	                type: 'DELETE',
+	                dataType: "json",
+	                success: showResult
+	            });
+	        	
+	        	function showResult(response) {
+	        		//flush all the localstorage
+	        		if(response && response.code == 200) {
+	        			localStorage.clear();
+	        			//enable the join button
+	        			$('#joinGame').prop('disabled', false);
+	        			//clear the points table
+	        			updatePointsTable(" ", " ", " ", " ", " ", " ", "IDLE");
+	        			$('#abort').prop('disabled', true);
+	        		}
+	        	}
+        	}
+        	else {
+        		$('#lookUpMessage').html("No play found to abort!");
+        	}
+        });
+        //function for join a game
+        $('#joinGame').click(function () {
+            var data = { "name": $('#playerName').val() };
+            var requestURL = "/rest/play/twoPlayer/player";
+            var validRequest = false;
+        	$('#lookUpMessage').css("visibility", "visible");
+        	var localStorageConsole = {
+        			"player1Id": localStorage.getItem("player1Id"),
+        			"player2Id": localStorage.getItem("player2Id"),
+        			"playId": localStorage.getItem("playId"),
+        	}
+        	console.log('localstorage data: ' + JSON.stringify(localStorageConsole));
+        	
+            if(!localStorage.getItem("playId")) {
+            	//start a new game and add this player
+	             if(!localStorage.getItem("player1Id") && $('#playerName').val()) {
+		            validRequest = true;
+	            }
+            }
+            //playId and player1 already joined. add player2
+            else if(localStorage.getItem("player1Id") && !localStorage.getItem("player2Id") && $('#playerName').val()) {
+            	requestURL += "?playId=" + localStorage.getItem("playId");
+            	console.log("Adding player2" + $('#playerName').val() + "to play: " + localStorage.getItem("playId"));
+	            validRequest = true;
+            }
+            else if(localStorage.getItem("player1Id") && localStorage.getItem("player2Id")){
+                $('#lookUpMessage').html("Play: " + localStorage.getItem("playId") + " already started!");
+            }
+            if(validRequest) {
+            	console.log('POSTing data: ' + JSON.stringify(data));
+            	$('#abort').prop('disabled', false);
+	            $.ajax({
+	                url: requestURL,
+	                type: 'POST',
+	                data: JSON.stringify(data),
+	                contentType: "application/json; charset=utf-8",
+	                dataType: "json",
+	                success: showResult,
+	                error: showError
+	            });
+	            function showError(response) {
+	                console.log("error" + response);
+	                $('#pointsTableDiv').css("visibility", "hidden");
+	                $('#pointsTableHeader').css("visibility", "hidden");
+	                $('#lookUpMessage').html('<div class="alert" style="text-align: center">' +
+	                        '<strong style="color: #e2182d">Error! </strong><strong>' + response.responseText + '</strong></div>');
+	            }
+	
+	            function showResult(response) {
+	            	
+	            	console.log(JSON.stringify(response));
+	            	//check if both players have joined!
+	            	if(response.code == 200) {
+	            		var result = response.result;
+	                    //show the process message
+	                    $('#lookUpMessage').css("visibility", "visible");
+	                    if(result && result.player1Id) {
+	                    	var player1Name = result.player1Id;
+	                    	//try to print name
+	                    	if(result.player1 & result.player1.name) {
+	                    		player1Name = result.player1.name;
+	                    	}
+		                    $('#lookUpMessage').html("Player1: " + player1Name + " joined!");		
+		            	}
+		            	if(response.result.player2Id) {
+		                    $('#lookUpMessage').html("Game started!");
+		                    $('#joinGame').prop('disabled', true);
+		            	}
+		            	if(result.id) {
+		            		localStorage.setItem("playId", result.id);
+		            		if(result.player1Id) {
+				            	localStorage.setItem("player1Id", result.player1Id);
+				            	if(getPlayerName(result.player1)) {
+				            		$('#player1Name').html(getPlayerName(result.player1));
+				            		localStorage.setItem("player1Name", getPlayerName(result.player1));
+				            	}
+		            		}
+		            		if(result.player2Id) {
+				            	localStorage.setItem("player2Id", result.player2Id);
+				            	if(getPlayerName(result.player2)) {
+				            		$('#player2Name').html(getPlayerName(result.player2));
+				            		localStorage.setItem("player2Name", getPlayerName(result.player2));
+				            	}
+		            		}
+		            		if(result.playState) {
+		            			$('#playState').html(result.playState);
+		            			localStorage.setItem("playState", result.playState);
+		            		}
+		            	}
+	            	}
+	            }
+	            
+	            function getPlayerName(player) {
+	            	if(player && player.name) {
+	            		return player.name;
+	            	}
+	            }
+            }
+        });
+        
+        //method to update points table and the play state
+        function updatePointsTable(player1Name, player1Points, player1Moves, 
+        		player2Name, player2Points, player2Moves, playState) {
+        	console.log('updating points table.. ');
+        	if(player1Name) {
+        		$('#player1Name').html(player1Name);
+        	}
+        	if(player1Points) {
+        		$('#player1Points').html(player1Points);
+        	}
+        	if(player1Moves) {
+        		$('#player1Moves').html(player1Moves);
+        	}
+        	if(player2Name) {
+        		$('#player2Name').html(player2Name);
+        	}
+        	if(player2Points) {
+        		$('#player2Points').html(player2Points);
+        	}
+        	if(player2Moves) {
+        		$('#player2Moves').html(player2Moves);
+        	}
+        	if(playState) {
+        		$('#playState').html(playState);
+        		if(playState != 'IDLE') {
+        			$('#abort').prop('disabled', false);
+        		}
+        	}
+        }
+    });
+</script>
+	<script src="static/public/src/js/libs/bootstrap/bootstrap.js"></script>
+	<script src="static/public/src/js/libs/vendor/prefixfree.min.js"></script>
+</body>
+</html>

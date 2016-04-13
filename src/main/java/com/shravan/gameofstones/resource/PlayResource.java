@@ -70,16 +70,18 @@ public class PlayResource {
      */
     @POST
     @Path("twoPlayer/player")
-    public RestResponse playerJoin(@QueryParam("playId") String playId, Player player) {
+    @Produces(MediaType.APPLICATION_JSON)
+    public String playerJoin(@QueryParam("playId") String playId, Player player) {
 
         Play play = Play.getPlay(playId);
         if (player != null) {
             Play twoPlayerPlay = Play.addPlayerInPlay(play, player);
-            return RestResponse.ok(twoPlayerPlay.getFullPlayDetails());
+            return RestResponse.ok(twoPlayerPlay.getFullPlayDetails()).getJson();
         }
         else {
-            return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(),
-                "Two player requirement not met. Please given details for both players");
+            return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(), String.format(
+                "Two player requirement already met. Player: %s not added", player != null ? player.getName() : null))
+                               .getJson();
         }
     }
 
