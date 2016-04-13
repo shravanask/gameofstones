@@ -103,7 +103,7 @@ body {
 			<form class="well">
 				<div class="container">
 					<div class="span2">
-						<label>Player Name:</label> <input type="text" id="playerName" value="Player1">
+						<label>Player Name:</label> <input type="text" id="playerName" placeholder="Player Name">
 					</div>
 					<div class="span1"></div>
 					<table>
@@ -152,6 +152,11 @@ body {
             }
         }
         supports_html5_storage();
+        var playId = getUrlParameter("playId");
+        if(playId) {
+        	localStorage.setItem("playId", playId);
+        	console.log('playId '+ playId + ' given.')
+        }
         if(localStorage.getItem("playId")) {
         	$('#lookUpMessage').html("Play: " + localStorage.getItem("playId") + " already started!");
         	if(localStorage.getItem("player2Id")) {
@@ -161,11 +166,28 @@ body {
         	else if(localStorage.getItem("player1Id")) {
         		$('#lookUpMessage').html("Only player1 found! Add another player.");
         	}
+        	else {
+        		$('#lookUpMessage').html("No local players found, looking up remote active play..");
+        		//fetch play details from server
+        		$.ajax({
+	                url: "/rest/play/" + localStorage.getItem("playId"),
+	                type: 'GET',
+	                contentType: "application/json; charset=utf-8",
+	                dataType: "json",
+	                success: showResult,
+	                error: showError
+	            });
+        		
+        	}
         	//update game names
         	updatePointsTable(localStorage.getItem("player1Name"), localStorage.getItem("player1Points"), 
         			localStorage.getItem("player1Moves"), localStorage.getItem("player2Name"), 
         			localStorage.getItem("player2Points"), localStorage.getItem("player2Moves"), 
         			localStorage.getItem("playState"));
+        }
+        //when there are no players put Player1 as the playerName 
+        else {
+        	$('#playerName').val("Player 1");
         }
         //function for aborting a game
         $('#abort').click(function () {
@@ -174,10 +196,10 @@ body {
 	                url: "/rest/play/reset/" + localStorage.getItem("playId"),
 	                type: 'DELETE',
 	                dataType: "json",
-	                success: showResult
+	                success: clearPlay
 	            });
 	        	
-	        	function showResult(response) {
+	        	function clearPlay(response) {
 	        		//flush all the localstorage
 	        		if(response && response.code == 200) {
 	        			localStorage.clear();
@@ -233,65 +255,69 @@ body {
 	                success: showResult,
 	                error: showError
 	            });
-	            function showError(response) {
-	                console.log("error" + response);
-	                $('#pointsTableDiv').css("visibility", "hidden");
-	                $('#pointsTableHeader').css("visibility", "hidden");
-	                $('#lookUpMessage').html('<div class="alert" style="text-align: center">' +
-	                        '<strong style="color: #e2182d">Error! </strong><strong>' + response.responseText + '</strong></div>');
-	            }
-	
-	            function showResult(response) {
-	            	
-	            	console.log(JSON.stringify(response));
-	            	//check if both players have joined!
-	            	if(response.code == 200) {
-	            		var result = response.result;
-	                    //show the process message
-	                    $('#lookUpMessage').css("visibility", "visible");
-	                    if(result && result.player1Id) {
-	                    	var player1Name = result.player1Id;
-	                    	//try to print name
-	                    	if(result.player1 & result.player1.name) {
-	                    		player1Name = result.player1.name;
-	                    	}
-		                    $('#lookUpMessage').html("Player1: " + player1Name + " joined!");		
-		            	}
-		            	if(response.result.player2Id) {
-		                    $('#lookUpMessage').html("Game started!");
-		                    $('#joinGame').prop('disabled', true);
-		            	}
-		            	if(result.id) {
-		            		localStorage.setItem("playId", result.id);
-		            		if(result.player1Id) {
-				            	localStorage.setItem("player1Id", result.player1Id);
-				            	if(getPlayerName(result.player1)) {
-				            		$('#player1Name').html(getPlayerName(result.player1));
-				            		localStorage.setItem("player1Name", getPlayerName(result.player1));
-				            	}
-		            		}
-		            		if(result.player2Id) {
-				            	localStorage.setItem("player2Id", result.player2Id);
-				            	if(getPlayerName(result.player2)) {
-				            		$('#player2Name').html(getPlayerName(result.player2));
-				            		localStorage.setItem("player2Name", getPlayerName(result.player2));
-				            	}
-		            		}
-		            		if(result.playState) {
-		            			$('#playState').html(result.playState);
-		            			localStorage.setItem("playState", result.playState);
-		            		}
-		            	}
-	            	}
-	            }
-	            
-	            function getPlayerName(player) {
-	            	if(player && player.name) {
-	            		return player.name;
-	            	}
-	            }
             }
         });
+        
+        function showError(response) {
+            console.log("error" + response);
+            $('#pointsTableDiv').css("visibility", "hidden");
+            $('#pointsTableHeader').css("visibility", "hidden");
+            $('#lookUpMessage').html('<div class="alert" style="text-align: center">' +
+                    '<strong style="color: #e2182d">Error! </strong><strong>' + response.responseText + '</strong></div>');
+        }
+
+        function showResult(response) {
+        	
+        	console.log(JSON.stringify(response));
+        	//check if both players have joined!
+        	if(response.code == 200) {
+        		var result = JSON.parse(response.result);
+                //show the process message
+                $('#lookUpMessage').css("visibility", "visible");
+                if(result.player1Id) {
+                	var player1Name = result.player1Id;
+                	//try to print name
+                	if(result.player1 & result.player1.name) {
+                		player1Name = result.player1.name;
+                	}
+                    $('#lookUpMessage').html("Player1: " + player1Name + " joined!");		
+            	}
+            	if(result.player2Id) {
+                    $('#lookUpMessage').html("Game started!");
+                    $('#joinGame').prop('disabled', true);
+            	}
+            	else if(result.player1Id) {
+            		$('#playerName').val("Player 2");
+            	}
+            	if(result.id) {
+            		localStorage.setItem("playId", result.id);
+            		if(result.player1Id) {
+		            	localStorage.setItem("player1Id", result.player1Id);
+		            	if(getPlayerName(result.player1)) {
+		            		$('#player1Name').html(getPlayerName(result.player1));
+		            		localStorage.setItem("player1Name", getPlayerName(result.player1));
+		            	}
+            		}
+            		if(result.player2Id) {
+		            	localStorage.setItem("player2Id", result.player2Id);
+		            	if(getPlayerName(result.player2)) {
+		            		$('#player2Name').html(getPlayerName(result.player2));
+		            		localStorage.setItem("player2Name", getPlayerName(result.player2));
+		            	}
+            		}
+            		if(result.playState) {
+            			$('#playState').html(result.playState);
+            			localStorage.setItem("playState", result.playState);
+            		}
+            	}
+        	}
+        }
+        
+        function getPlayerName(player) {
+        	if(player && player.name) {
+        		return player.name;
+        	}
+        }
         
         //method to update points table and the play state
         function updatePointsTable(player1Name, player1Points, player1Moves, 
@@ -321,6 +347,17 @@ body {
         			$('#abort').prop('disabled', false);
         		}
         	}
+        }
+        //method to fetch param from the request url
+        function getUrlParameter(paramKey) {
+        	var pageURL = window.location.search.substring(1);
+        	var urlVariables = pageURL.split('&');
+            for (var index = 0; index < urlVariables.length; index++) {
+                var parameterName = urlVariables[index].split('=');
+                if (parameterName[0] == paramKey) {
+                    return parameterName[1];
+                }
+            }
         }
     });
 </script>
