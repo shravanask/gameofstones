@@ -47,7 +47,8 @@ public class PlayResourceTest extends TestFramework {
 
         //assert that a game is created and persisted in the db
         assertThat(twoPlayerPlayResponse.getResult(), Matchers.notNullValue());
-        JsonNode twoPlayerPlayResponseNode = JSONFormatter.getMapper().valueToTree(twoPlayerPlayResponse.getResult());
+        JsonNode twoPlayerPlayResponseNode = JSONFormatter.getMapper()
+                                                          .readTree(twoPlayerPlayResponse.getResult().toString());
         playId = twoPlayerPlayResponseNode.get("id").asText();
         Play play = Play.getPlay(playId);
         Assert.assertThat(play, Matchers.notNullValue());
@@ -97,7 +98,7 @@ public class PlayResourceTest extends TestFramework {
         RestResponse makeMoveResponse = new PlayResource().makeMove(playId, player1Id, 0);
         assertThat(makeMoveResponse.getResult(), Matchers.notNullValue());
         //validate that the updated play has changed. player1Id has got the chance again
-        JsonNode makeMoveResponseNode = JSONFormatter.getMapper().valueToTree(makeMoveResponse.getResult());
+        JsonNode makeMoveResponseNode = JSONFormatter.getMapper().readTree(makeMoveResponse.getResult().toString());
         assertThat(makeMoveResponseNode.get("isPlayer1sMove").asBoolean(), Matchers.is(true));
         //assert that player1 has made one moves and player2 has none
         Play play = Play.getPlay(playId);
@@ -120,7 +121,7 @@ public class PlayResourceTest extends TestFramework {
         makeFirstMoveTest();
         RestResponse makeMoveResponse = new PlayResource().makeMove(playId, player1Id, 1);
         assertThat(makeMoveResponse.getResult(), Matchers.notNullValue());
-        JsonNode makeMoveResponseNode = JSONFormatter.getMapper().valueToTree(makeMoveResponse.getResult());
+        JsonNode makeMoveResponseNode = JSONFormatter.getMapper().readTree(makeMoveResponse.getResult().toString());
         //validate that the play has changed. player1Id has not got the chance again.
         assertThat(makeMoveResponseNode.get("isPlayer1sMove").asBoolean(), Matchers.is(false));
         //but has got all the stones from the opponent player
@@ -150,7 +151,7 @@ public class PlayResourceTest extends TestFramework {
         //make player2 move
         RestResponse makeMoveResponse = new PlayResource().makeMove(playId, player2Id, 5);
         assertThat(makeMoveResponse.getResult(), Matchers.notNullValue());
-        JsonNode makeMoveResponseNode = JSONFormatter.getMapper().valueToTree(makeMoveResponse.getResult());
+        JsonNode makeMoveResponseNode = JSONFormatter.getMapper().readTree(makeMoveResponse.getResult().toString());
         //validate that the play has changed. player1Id has the chance again.
         assertThat(makeMoveResponseNode.get("isPlayer1sMove").asBoolean(), Matchers.is(true));
         //but has got all the stones from the opponent player
@@ -182,7 +183,7 @@ public class PlayResourceTest extends TestFramework {
 
         //validate that the player1 is declared the winner as he has 2 stones against 1 of player2
         assertThat(resetPlayResponse.getResult(), Matchers.notNullValue());
-        JsonNode resetPlayNode = JSONFormatter.getMapper().valueToTree(resetPlayResponse.getResult());
+        JsonNode resetPlayNode = JSONFormatter.getMapper().readTree(resetPlayResponse.getResult().toString());
         String leaderId = resetPlayNode.get("leaderId").textValue();
         assertThat(leaderId, Matchers.is(player1Id));
         //validate that the game is indeed aborted
@@ -232,12 +233,10 @@ public class PlayResourceTest extends TestFramework {
     public void twoPlayerGameFirstJoinsTest() throws Exception {
 
         //setup a game with one player
-        String playWithOnePlayerResponseString = new PlayResource().playerJoin(null, new Player("Player1"));
-        RestResponse playWithOnePlayerResponse = JSONFormatter.deserialize(playWithOnePlayerResponseString, false,
-            RestResponse.class);
+        RestResponse playWithOnePlayerResponse = new PlayResource().playerJoin(null, new Player("Player1"));
         assertThat(playWithOnePlayerResponse.getResult(), Matchers.notNullValue());
-        JsonNode playWithOnePlayerResponseNode = JSONFormatter.getMapper()
-                                                              .valueToTree(playWithOnePlayerResponse.getResult());
+        JsonNode playWithOnePlayerResponseNode = JSONFormatter.getMapper().readTree(
+            playWithOnePlayerResponse.getResult().toString());
         playId = playWithOnePlayerResponseNode.get("id").asText();
         player1Id = playWithOnePlayerResponseNode.get("player1Id").asText();
 
@@ -263,12 +262,10 @@ public class PlayResourceTest extends TestFramework {
         //setup the play and make first player join
         twoPlayerGameFirstJoinsTest();
         //make player 2 join the game
-        String playWithTwoPlayerResponseString = new PlayResource().playerJoin(playId, new Player("Player2"));
-        RestResponse playWithTwoPlayerResponse = JSONFormatter.deserialize(playWithTwoPlayerResponseString, false,
-            RestResponse.class);
+        RestResponse playWithTwoPlayerResponse = new PlayResource().playerJoin(playId, new Player("Player2"));
         assertThat(playWithTwoPlayerResponse.getResult(), Matchers.notNullValue());
-        JsonNode playWithTwoPlayerResponseNode = JSONFormatter.getMapper()
-                                                              .valueToTree(playWithTwoPlayerResponse.getResult());
+        JsonNode playWithTwoPlayerResponseNode = JSONFormatter.getMapper().readTree(
+            playWithTwoPlayerResponse.getResult().toString());
         //make sure the second player joins the same game
         assertThat(playWithTwoPlayerResponseNode.get("id").asText(), Matchers.is(playId));
         player1Id = playWithTwoPlayerResponseNode.get("player1Id").asText();

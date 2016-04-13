@@ -16,6 +16,7 @@ import com.shravan.gameofstones.core.RestResponse;
 import com.shravan.gameofstones.model.Play;
 import com.shravan.gameofstones.model.Play.PlayState;
 import com.shravan.gameofstones.model.Player;
+import com.shravan.gameofstones.util.JSONFormatter;
 
 @Path("play")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -44,7 +45,7 @@ public class PlayResource {
         if (playId != null) {
             Play play = Play.getPlay(playId);
             if (play != null) {
-                return RestResponse.ok(play.getFullPlayDetails());
+                return RestResponse.ok(JSONFormatter.serialize(play.getFullPlayDetails()));
             }
             else {
                 return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(),
@@ -71,17 +72,16 @@ public class PlayResource {
     @POST
     @Path("twoPlayer/player")
     @Produces(MediaType.APPLICATION_JSON)
-    public String playerJoin(@QueryParam("playId") String playId, Player player) {
+    public RestResponse playerJoin(@QueryParam("playId") String playId, Player player) {
 
         Play play = Play.getPlay(playId);
         if (player != null) {
             Play twoPlayerPlay = Play.addPlayerInPlay(play, player);
-            return RestResponse.ok(twoPlayerPlay.getFullPlayDetails()).getJson();
+            return RestResponse.ok(JSONFormatter.serialize(twoPlayerPlay.getFullPlayDetails()));
         }
         else {
             return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(), String.format(
-                "Two player requirement already met. Player: %s not added", player != null ? player.getName() : null))
-                               .getJson();
+                "Two player requirement already met. Player: %s not added", player != null ? player.getName() : null));
         }
     }
 
@@ -102,7 +102,7 @@ public class PlayResource {
         if (twoPlayerGamePlayload != null && twoPlayerGamePlayload.size() == 2) {
             Play twoPlayerPlay = Play.startTwoPlayerGame(twoPlayerGamePlayload.get("1"),
                 twoPlayerGamePlayload.get("2"));
-            return RestResponse.ok(twoPlayerPlay.getFullPlayDetails());
+            return RestResponse.ok(JSONFormatter.serialize(twoPlayerPlay.getFullPlayDetails()));
         }
         else {
             return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(),
@@ -127,7 +127,7 @@ public class PlayResource {
             if (play != null) {
                 play.setPlayState(PlayState.ABORTED);
                 play.createOrUpdate();
-                return RestResponse.ok(play.getFullPlayDetails());
+                return RestResponse.ok(JSONFormatter.serialize(play.getFullPlayDetails()));
             }
             else {
                 return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(),
@@ -162,7 +162,7 @@ public class PlayResource {
             if (play != null && PlayState.IN_PROGRESS.equals(play.getPlayState())) {
                 if (Arrays.asList(play.getPlayer1Id(), play.getPlayer2Id()).contains(playerId)) {
                     play.makeMove(playerId, pitIndex);
-                    return RestResponse.ok(play.getFullPlayDetails());
+                    return RestResponse.ok(JSONFormatter.serialize(play.getFullPlayDetails()));
                 }
                 else {
                     return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(),
