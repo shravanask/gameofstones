@@ -44,6 +44,44 @@ body {
 		padding-right: 20px;
 	}
 }
+#board {
+    -webkit-transition: all 0.5s ease-in-out;
+    -moz-transition: all 0.5s ease-in-out;
+    -o-transition: all 0.5s ease-in-out;
+    transition: all 0.5s ease-in-out;
+}
+#boardDiv {
+    position:relative; 
+    margin: 30px;
+    -webkit-transition: all 0.5s ease-in-out;
+    -moz-transition: all 0.5s ease-in-out;
+    -o-transition: all 0.5s ease-in-out;
+    transition: all 0.5s ease-in-out;
+}
+
+#boardDiv.rotated {
+    -webkit-transform : rotate(180deg); 
+    -moz-transform : rotate(180deg); 
+    -ms-transform : rotate(180deg); 
+    -o-transform : rotate(180deg); 
+    transform : rotate(180deg); 
+}
+.imagewrap {display:inline-block;position:relative;}
+.p11 {position:absolute;bottom:30%;left:22%;}
+.p12 {position:absolute;bottom:30%;left:33%;}
+.p13 {position:absolute;bottom:30%;left:45%;}
+.p14 {position:absolute;bottom:30%;left:56%;}
+.p15 {position:absolute;bottom:30%;left:68%;}
+.p16 {position:absolute;bottom:30%;left:79%;}
+.p17 {position:absolute;top:46%;left:91.5%;cursor:default;}
+.p27 {position:absolute;top:45%;left:11%;cursor:default;}
+.p26 {position:absolute;top:30%;left:22%;}
+.p25 {position:absolute;top:30%;left:33%;}
+.p24 {position:absolute;top:30%;left:45%;}
+.p23 {position:absolute;top:30%;left:56%;}
+.p22 {position:absolute;top:30%;left:68%;}
+.p21 {position:absolute;top:30%;left:79%;}
+.flip {position:absolute;bottom:0%;right:0%;}
 </style>
 <!-- Fav and touch icons -->
 <link rel="shortcut icon"
@@ -59,7 +97,6 @@ body {
 </head>
 
 <body>
-
 	<div id="wrap">
 		<div class="row">
 			<div class="navbar" style="margin-bottom: 0px; padding-left: 35px">
@@ -101,32 +138,39 @@ body {
 				</table>
 			</div>
 			<form class="well">
-				<div class="container">
-					<div class="span2">
-						<label>Player Name:</label> <input type="text" id="playerName" placeholder="Player Name">
+				<div class="container" style="width:800px; margin:0 auto;">
+					<div class="span8" style="width:800px; margin:0 auto;">
+						<label>Player Name:</label> 
+						<input type="text" id="playerName" placeholder="Player Name">
+						<button class="btn btn-primary" id="joinGame" type="button" style="vertical-align: top;">Join
+						</button>
+						<button class="btn btn-inverse" id="abort" type="reset" disabled="disabled" style="vertical-align: top;">Abort!
+						</button>
+						<div class="span5" align="center" style="text-align: left;" id="lookUpMessage">
+						</div>
 					</div>
-					<div class="span1"></div>
-					<table>
-						<tbody>
-							<tr>
-								<td>
-									<div class="span2">
-										<label style="visibility: hidden">Actions</label>
-										<button class="btn btn-primary" id="joinGame" type="button">Join</button>
-										<button class="btn btn-inverse" id="abort" type="reset" disabled="disabled">
-											Abort!</button>
-									</div>
-								</td>
-								<td><label style="visibility: hidden">Actions</label>
-									<div class="span5" align="center"
-										style="text-align: left;" id="lookUpMessage">
-									</div>
-								</td>
-							</tr>
-						</tbody>
-					</table>
 				</div>
 			</form>
+			<div style="width: 800px; margin:0 auto;">
+				<div class="imagewrap" id="boardDiv">
+					<img alt="Game of Stones" src="/static/GameOfStones1.png" id="board" onclick="rotateBoard(true);">
+					<input type="button" class="p11" value = "6" onclick="makeMove(true, 0)"/>
+					<input type="button" class="p12" value = "6" onclick="makeMove(true, 1)"/>
+					<input type="button" class="p13" value = "6" onclick="makeMove(true, 2)"/>
+					<input type="button" class="p14" value = "6" onclick="makeMove(true, 3)"/>
+					<input type="button" class="p15" value = "6" onclick="makeMove(true, 4)"/>
+					<input type="button" class="p16" value = "6" onclick="makeMove(true, 5)"/>
+					<label class="p17">0</label>
+					<input type="button" class="p21" value = "6" onclick="makeMove(false, 0)"/>
+					<input type="button" class="p22" value = "6" onclick="makeMove(false, 1)"/>
+					<input type="button" class="p23" value = "6" onclick="makeMove(false, 2)"/>
+					<input type="button" class="p24" value = "6" onclick="makeMove(false, 3)"/>
+					<input type="button" class="p25" value = "6" onclick="makeMove(false, 4)"/>
+					<input type="button" class="p26" value = "6" onclick="makeMove(false, 5)"/>
+					<label class="p27">0</label>
+					<button class="flip btn-inverse" type="reset" onclick="rotateBoard('always');"><i class="icon-white icon-repeat"></i></button>
+				</div>
+			</div>
 		</div>
 		<div id="push"></div>
 		<div id="footer">
@@ -141,6 +185,7 @@ body {
 ================================================== -->
 	<!-- Placed at the end of the document so the pages load faster -->
 	<script src="static/public/src/js/libs/jquery/jquery.js"></script>
+	<script src="static/public/src/js/libs/jquery/jquery.rotate.1-1.js"></script>
 	<script>
     $(document).ready(function () {
     	
@@ -155,39 +200,26 @@ body {
         var playId = getUrlParameter("playId");
         if(playId) {
         	localStorage.setItem("playId", playId);
+        	if(!localStorage.getItem("view")) {
+        		localStorage.setItem("view", "player2");
+        	}
         	console.log('playId '+ playId + ' given.')
         }
         if(localStorage.getItem("playId")) {
-        	$('#lookUpMessage').html("Play: " + localStorage.getItem("playId") + " already started!");
-        	if(localStorage.getItem("player2Id")) {
-        		$('#lookUpMessage').html("Existing players found!");	
-        		$('#joinGame').prop('disabled', true);
-        	}
-        	else if(localStorage.getItem("player1Id")) {
-        		$('#lookUpMessage').html("Only player1 found! Add another player.");
-        	}
-        	else {
-        		$('#lookUpMessage').html("No local players found, looking up remote active play..");
-        		//fetch play details from server
-        		$.ajax({
-	                url: "/rest/play/" + localStorage.getItem("playId"),
-	                type: 'GET',
-	                contentType: "application/json; charset=utf-8",
-	                dataType: "json",
-	                success: showResult,
-	                error: showError
-	            });
-        		
-        	}
-        	//update game names
-        	updatePointsTable(localStorage.getItem("player1Name"), localStorage.getItem("player1Points"), 
-        			localStorage.getItem("player1Moves"), localStorage.getItem("player2Name"), 
-        			localStorage.getItem("player2Points"), localStorage.getItem("player2Moves"), 
-        			localStorage.getItem("playState"));
+       		//fetch play details from server
+       		$.ajax({
+                url: "/rest/play/" + localStorage.getItem("playId"),
+                type: 'GET',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: showResult,
+                error: showError
+            });
         }
         //when there are no players put Player1 as the playerName 
         else {
         	$('#playerName').val("Player 1");
+        	localStorage.clear();
         }
         //function for aborting a game
         $('#abort').click(function () {
@@ -232,6 +264,7 @@ body {
             	//start a new game and add this player
 	             if(!localStorage.getItem("player1Id") && $('#playerName').val()) {
 		            validRequest = true;
+		            localStorage.setItem("view", "player1");
 	            }
             }
             //playId and player1 already joined. add player2
@@ -239,13 +272,14 @@ body {
             	requestURL += "?playId=" + localStorage.getItem("playId");
             	console.log("Adding player2" + $('#playerName').val() + "to play: " + localStorage.getItem("playId"));
 	            validRequest = true;
+	            localStorage.setItem("view", "player2");
             }
             else if(localStorage.getItem("player1Id") && localStorage.getItem("player2Id")){
                 $('#lookUpMessage').html("Play: " + localStorage.getItem("playId") + " already started!");
+                localStorage.setItem("view", "together");
             }
             if(validRequest) {
             	console.log('POSTing data: ' + JSON.stringify(data));
-            	$('#abort').prop('disabled', false);
 	            $.ajax({
 	                url: requestURL,
 	                type: 'POST',
@@ -258,14 +292,6 @@ body {
             }
         });
         
-        function showError(response) {
-            console.log("error" + response);
-            $('#pointsTableDiv').css("visibility", "hidden");
-            $('#pointsTableHeader').css("visibility", "hidden");
-            $('#lookUpMessage').html('<div class="alert" style="text-align: center">' +
-                    '<strong style="color: #e2182d">Error! </strong><strong>' + response.responseText + '</strong></div>');
-        }
-
         function showResult(response) {
         	
         	console.log(JSON.stringify(response));
@@ -290,6 +316,7 @@ body {
             		$('#playerName').val("Player 2");
             	}
             	if(result.id) {
+                	$('#abort').prop('disabled', false);
             		localStorage.setItem("playId", result.id);
             		if(result.player1Id) {
 		            	localStorage.setItem("player1Id", result.player1Id);
@@ -309,7 +336,22 @@ body {
             			$('#playState').html(result.playState);
             			localStorage.setItem("playState", result.playState);
             		}
+            		//update the points table
+            		/* $('#player1Moves').html(result.player1.moves);
+            		$('#player2Moves').html(result.player2.moves);
+            		$('#player1Points').html(result.player1.score);
+            		$('#player2Points').html(result.player2.score); */
+            		var player1 = result.player1;
+            		var player2 = result.player2;
+            		updatePointsTable(player1.name, player1.score, player1.moves, 
+            				player2.name, player2.score, player2.moves, result.playState);
+            		//rotate the board if needed
+            		rotateBoard(result.isPlayer1sMove);
             	}
+        	}
+        	else if(response.code == 412) {
+        		console.log('Clearing local storage, no play fetched');
+        		localStorage.clear();
         	}
         }
         
@@ -319,35 +361,6 @@ body {
         	}
         }
         
-        //method to update points table and the play state
-        function updatePointsTable(player1Name, player1Points, player1Moves, 
-        		player2Name, player2Points, player2Moves, playState) {
-        	console.log('updating points table.. ');
-        	if(player1Name) {
-        		$('#player1Name').html(player1Name);
-        	}
-        	if(player1Points) {
-        		$('#player1Points').html(player1Points);
-        	}
-        	if(player1Moves) {
-        		$('#player1Moves').html(player1Moves);
-        	}
-        	if(player2Name) {
-        		$('#player2Name').html(player2Name);
-        	}
-        	if(player2Points) {
-        		$('#player2Points').html(player2Points);
-        	}
-        	if(player2Moves) {
-        		$('#player2Moves').html(player2Moves);
-        	}
-        	if(playState) {
-        		$('#playState').html(playState);
-        		if(playState != 'IDLE') {
-        			$('#abort').prop('disabled', false);
-        		}
-        	}
-        }
         //method to fetch param from the request url
         function getUrlParameter(paramKey) {
         	var pageURL = window.location.search.substring(1);
@@ -360,6 +373,117 @@ body {
             }
         }
     });
+    
+  	//method to update points table and the play state
+    function updatePointsTable(player1Name, player1Points, player1Moves, 
+    		player2Name, player2Points, player2Moves, playState) {
+    	console.log('updating points table.. ');
+    	if(player1Name) {
+    		$('#player1Name').html(player1Name);
+    	}
+    	if(player1Points) {
+    		$('#player1Points').html(player1Points);
+    	}
+    	if(player1Moves) {
+    		$('#player1Moves').html(player1Moves);
+    	}
+    	if(player2Name) {
+    		$('#player2Name').html(player2Name);
+    	}
+    	if(player2Points) {
+    		$('#player2Points').html(player2Points);
+    	}
+    	if(player2Moves) {
+    		$('#player2Moves').html(player2Moves);
+    	}
+    	if(playState) {
+    		$('#playState').html(playState);
+    		if(playState != 'IDLE') {
+    			$('#abort').prop('disabled', false);
+    		}
+    	}
+    }
+    
+    function showError(response) {
+        console.log("error" + response);
+        $('#lookUpMessage').html('<div class="alert" style="text-align: center">' +
+                '<strong style="color: #e2182d">Error! </strong><strong>' + response.result + '</strong></div>');
+    }
+    
+    var alreadyFlipped = false;
+    function rotateBoard(isPlayer1Move) {
+    	//save stuff in the memory
+		$('#lookUpMessage').css("visibility", "visible");
+    	if(isPlayer1Move) {
+			localStorage.setItem("playTurn", "player1");
+			$('#lookUpMessage').html(localStorage.getItem('player1Name') + ', make your move..')
+		}
+		else {
+			localStorage.setItem("playTurn", "player2");
+			$('#lookUpMessage').html(localStorage.getItem('player2Name') + ', make your move..')
+		}
+    	if(isPlayer1Move == 'always') {
+    		document.getElementById('boardDiv').classList.toggle('rotated');
+    	}
+    	if(localStorage.getItem("view") == "together" && !isPlayer1Move) {
+    		document.getElementById('boardDiv').classList.toggle('rotated');			
+    	}
+    	else if(localStorage.getItem("view") == "player2" && !alreadyFlipped) {
+    		document.getElementById('boardDiv').classList.toggle('rotated');
+    		alreadyFlipped = true;
+    	}
+    }
+    
+    //make a move method
+    function makeMove(isPlayer1, pitIndex) {
+    	console.log((isPlayer1 ? 'Player1' : 'Player2') + ' checking if a move is possible, at pit:'+ pitIndex);
+    	if(localStorage.getItem("playId") && localStorage.getItem("player1Id") && localStorage.getItem("player2Id")) {
+    		$('#lookUpMessage').css("visibility", "visible");
+   			$('#lookUpMessage').html('Making your move..');
+   			var playerId = isPlayer1 ? localStorage.getItem("player1Id") : localStorage.getItem("player2Id");
+	    	
+	    	$.ajax({
+	            url: '/rest/play/makeMove/' + localStorage.getItem('playId') + '/' + playerId + '/' + pitIndex,
+	            type: 'POST',
+	            contentType: "application/json; charset=utf-8",
+	            dataType: "json",
+	            success: successfulMove,
+	            error: showError
+	        });
+	    	
+	    	function successfulMove(response) {
+	    		console.log(JSON.stringify(response));
+	        	if(response.code == 200) {
+	        		var result = JSON.parse(response.result);
+	        		var board = result.board;
+	        		//update player1 pit
+	        		$('#p11').prop('value', board.player1Pits[0]);
+	        		$('#p12').prop('value', board.player1Pits[1]);
+	        		$('#p13').prop('value', board.player1Pits[2]);
+	        		$('#p14').prop('value', board.player1Pits[3]);
+	        		$('#p15').prop('value', board.player1Pits[4]);
+	        		$('#p16').prop('value', board.player1Pits[5]);
+	        		$('#p17').prop('value', board.player1Pits[6]);
+	        		//update player2 pit
+	        		$('#p21').prop('value', board.player2Pits[0]);
+	        		$('#p22').prop('value', board.player2Pits[1]);
+	        		$('#p23').prop('value', board.player2Pits[2]);
+	        		$('#p24').prop('value', board.player2Pits[3]);
+	        		$('#p25').prop('value', board.player2Pits[4]);
+	        		$('#p26').prop('value', board.player2Pits[5]);
+	        		$('#p27').prop('value', board.player2Pits[6]);
+	        		//update the points table
+	        		var player1 = result.player1;
+            		var player2 = result.player2;
+            		updatePointsTable(player1.name, player1.score, player1.moves, 
+            				player2.name, player2.score, player2.moves, result.playState);
+	        		//rotate board if necessary
+	        		rotateBoard(result.isPlayer1sMove);
+	        		$('#lookUpMessage').css("visibility", "hidden");
+	        	}
+	    	}
+    	}
+    }
 </script>
 	<script src="static/public/src/js/libs/bootstrap/bootstrap.js"></script>
 	<script src="static/public/src/js/libs/vendor/prefixfree.min.js"></script>
