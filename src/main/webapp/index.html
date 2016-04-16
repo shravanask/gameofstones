@@ -67,21 +67,21 @@ body {
     transform : rotate(180deg); 
 }
 .imagewrap {display:inline-block;position:relative;}
-.p11 {position:absolute;bottom:30%;left:22%;}
-.p12 {position:absolute;bottom:30%;left:33%;}
-.p13 {position:absolute;bottom:30%;left:45%;}
-.p14 {position:absolute;bottom:30%;left:56%;}
-.p15 {position:absolute;bottom:30%;left:68%;}
-.p16 {position:absolute;bottom:30%;left:79%;}
-.p17 {position:absolute;top:46%;left:91.5%;cursor:default;}
+.p11 {position:absolute;bottom:33%;left:21%;}
+.p12 {position:absolute;bottom:33%;left:32%;}
+.p13 {position:absolute;bottom:33%;left:43%;}
+.p14 {position:absolute;bottom:33%;left:54%;}
+.p15 {position:absolute;bottom:33%;left:65%;}
+.p16 {position:absolute;bottom:33%;left:76%;}
+.p17 {position:absolute;top:45%;left:88%;cursor:default;}
 .p27 {position:absolute;top:45%;left:11%;cursor:default;}
-.p26 {position:absolute;top:30%;left:22%;}
-.p25 {position:absolute;top:30%;left:33%;}
-.p24 {position:absolute;top:30%;left:45%;}
-.p23 {position:absolute;top:30%;left:56%;}
-.p22 {position:absolute;top:30%;left:68%;}
-.p21 {position:absolute;top:30%;left:79%;}
-.flip {position:absolute;bottom:0%;right:0%;}
+.p26 {position:absolute;top:33%;left:21%;}
+.p25 {position:absolute;top:33%;left:31.5%;}
+.p24 {position:absolute;top:33%;left:43%;}
+.p23 {position:absolute;top:33%;left:54%;}
+.p22 {position:absolute;top:33%;left:65%;}
+.p21 {position:absolute;top:33%;left:76%;}
+.flip {position:absolute;bottom:10%;right:4%;}
 </style>
 <!-- Fav and touch icons -->
 <link rel="shortcut icon"
@@ -152,22 +152,24 @@ body {
 				</div>
 			</form>
 			<div style="width: 800px; margin:0 auto;">
-				<div class="imagewrap" id="boardDiv">
-					<img alt="Game of Stones" src="/static/GameOfStones1.png" id="board" onclick="rotateBoard(true);">
-					<input type="button" class="p11" value = "6" onclick="makeMove(true, 0)"/>
-					<input type="button" class="p12" value = "6" onclick="makeMove(true, 1)"/>
-					<input type="button" class="p13" value = "6" onclick="makeMove(true, 2)"/>
-					<input type="button" class="p14" value = "6" onclick="makeMove(true, 3)"/>
-					<input type="button" class="p15" value = "6" onclick="makeMove(true, 4)"/>
-					<input type="button" class="p16" value = "6" onclick="makeMove(true, 5)"/>
-					<label class="p17">0</label>
-					<input type="button" class="p21" value = "6" onclick="makeMove(false, 0)"/>
-					<input type="button" class="p22" value = "6" onclick="makeMove(false, 1)"/>
-					<input type="button" class="p23" value = "6" onclick="makeMove(false, 2)"/>
-					<input type="button" class="p24" value = "6" onclick="makeMove(false, 3)"/>
-					<input type="button" class="p25" value = "6" onclick="makeMove(false, 4)"/>
-					<input type="button" class="p26" value = "6" onclick="makeMove(false, 5)"/>
-					<label class="p27">0</label>
+				<div class="imagewrap">
+					<div class="imagewrap" id="boardDiv">
+						<img alt="Game of Stones" src="/static/GameOfStones1.png" id="board">
+					</div>
+					<input type="button" id="p11" class="p11" value = "6" onclick="makeMove(true, 0)"/>
+					<input type="button" id="p12" class="p12" value = "6" onclick="makeMove(true, 1)"/>
+					<input type="button" id="p13" class="p13" value = "6" onclick="makeMove(true, 2)"/>
+					<input type="button" id="p14" class="p14" value = "6" onclick="makeMove(true, 3)"/>
+					<input type="button" id="p15" class="p15" value = "6" onclick="makeMove(true, 4)"/>
+					<input type="button" id="p16" class="p16" value = "6" onclick="makeMove(true, 5)"/>
+					<label id="p17" class="p17">0</label>
+					<input type="button" id="p21" class="p21" value = "6" onclick="makeMove(false, 0)"/>
+					<input type="button" id="p22" class="p22" value = "6" onclick="makeMove(false, 1)"/>
+					<input type="button" id="p23" class="p23" value = "6" onclick="makeMove(false, 2)"/>
+					<input type="button" id="p24" class="p24" value = "6" onclick="makeMove(false, 3)"/>
+					<input type="button" id="p25" class="p25" value = "6" onclick="makeMove(false, 4)"/>
+					<input type="button" id="p26" class="p26" value = "6" onclick="makeMove(false, 5)"/>
+					<label id="p27" class="p27">0</label>
 					<button class="flip btn-inverse" type="reset" onclick="rotateBoard('always');"><i class="icon-white icon-repeat"></i></button>
 				</div>
 			</div>
@@ -187,6 +189,9 @@ body {
 	<script src="static/public/src/js/libs/jquery/jquery.js"></script>
 	<script src="static/public/src/js/libs/jquery/jquery.rotate.1-1.js"></script>
 	<script>
+	//make a clone of the boardDiv
+	var boardDivClone = $("#boardDiv").clone();
+	
     $(document).ready(function () {
     	
         function supports_html5_storage() {
@@ -238,7 +243,8 @@ body {
 	        			//enable the join button
 	        			$('#joinGame').prop('disabled', false);
 	        			//clear the points table
-	        			updatePointsTable(" ", " ", " ", " ", " ", " ", "IDLE");
+	        			$('#boardDiv').replaceWith(boardDivClone.clone());
+	        			$("#playState").html("IDLE");
 	        			$('#abort').prop('disabled', true);
 	        		}
 	        	}
@@ -272,11 +278,10 @@ body {
             	requestURL += "?playId=" + localStorage.getItem("playId");
             	console.log("Adding player2" + $('#playerName').val() + "to play: " + localStorage.getItem("playId"));
 	            validRequest = true;
-	            localStorage.setItem("view", "player2");
+	            localStorage.setItem("view", "together");
             }
             else if(localStorage.getItem("player1Id") && localStorage.getItem("player2Id")){
                 $('#lookUpMessage').html("Play: " + localStorage.getItem("playId") + " already started!");
-                localStorage.setItem("view", "together");
             }
             if(validRequest) {
             	console.log('POSTing data: ' + JSON.stringify(data));
@@ -341,10 +346,7 @@ body {
             		$('#player2Moves').html(result.player2.moves);
             		$('#player1Points').html(result.player1.score);
             		$('#player2Points').html(result.player2.score); */
-            		var player1 = result.player1;
-            		var player2 = result.player2;
-            		updatePointsTable(player1.name, player1.score, player1.moves, 
-            				player2.name, player2.score, player2.moves, result.playState);
+            		updatePointsTable(result);
             		//rotate the board if needed
             		rotateBoard(result.isPlayer1sMove);
             	}
@@ -374,33 +376,47 @@ body {
         }
     });
     
-  	//method to update points table and the play state
-    function updatePointsTable(player1Name, player1Points, player1Moves, 
-    		player2Name, player2Points, player2Moves, playState) {
-    	console.log('updating points table.. ');
-    	if(player1Name) {
-    		$('#player1Name').html(player1Name);
-    	}
-    	if(player1Points) {
-    		$('#player1Points').html(player1Points);
-    	}
-    	if(player1Moves) {
-    		$('#player1Moves').html(player1Moves);
-    	}
-    	if(player2Name) {
-    		$('#player2Name').html(player2Name);
-    	}
-    	if(player2Points) {
-    		$('#player2Points').html(player2Points);
-    	}
-    	if(player2Moves) {
-    		$('#player2Moves').html(player2Moves);
-    	}
-    	if(playState) {
-    		$('#playState').html(playState);
-    		if(playState != 'IDLE') {
-    			$('#abort').prop('disabled', false);
-    		}
+    function updatePointsTable(result) {
+    	console.log('updating points table and board.. ' + JSON.stringify(result));
+	    	if(result) {
+	    	var player1 = result.player1;
+	    	if(player1) {
+	    		$('#player1Name').html(player1.name);
+	    		$('#player1Points').html(player1.score);
+	    		$('#player1Moves').html(player1.moves);
+	    	}
+	    	var player2 = result.player2;
+	    	if(player2Name) {
+	    		$('#player2Name').html(player2.name);
+	    		$('#player2Points').html(player2.score);
+	    		$('#player2Moves').html(player2.moves);
+	    	}
+	    	var playState = result.playState;
+	    	if(playState) {
+	    		$('#playState').html(playState);
+	    		if(playState != 'IDLE') {
+	    			$('#abort').prop('disabled', false);
+	    		}
+	    	}
+	    	var board = result.board;
+	    	if(board){
+	    		console.log("board.player1Pits[0]" + board.player1Pits[0]);
+	    		$('#p11').prop('value', board.player1Pits[0]);
+	    		$('#p12').prop('value', board.player1Pits[1]);
+	    		$('#p13').prop('value', board.player1Pits[2]);
+	    		$('#p14').prop('value', board.player1Pits[3]);
+	    		$('#p15').prop('value', board.player1Pits[4]);
+	    		$('#p16').prop('value', board.player1Pits[5]);
+	    		$('#p17').html(board.player1Pits[6]);
+	    		//update player2 pit
+	    		$('#p21').prop('value', board.player2Pits[0]);
+	    		$('#p22').prop('value', board.player2Pits[1]);
+	    		$('#p23').prop('value', board.player2Pits[2]);
+	    		$('#p24').prop('value', board.player2Pits[3]);
+	    		$('#p25').prop('value', board.player2Pits[4]);
+	    		$('#p26').prop('value', board.player2Pits[5]);
+	    		$('#p27').html(board.player2Pits[6]);
+	    	}
     	}
     }
     
@@ -456,27 +472,8 @@ body {
 	        	if(response.code == 200) {
 	        		var result = JSON.parse(response.result);
 	        		var board = result.board;
-	        		//update player1 pit
-	        		$('#p11').prop('value', board.player1Pits[0]);
-	        		$('#p12').prop('value', board.player1Pits[1]);
-	        		$('#p13').prop('value', board.player1Pits[2]);
-	        		$('#p14').prop('value', board.player1Pits[3]);
-	        		$('#p15').prop('value', board.player1Pits[4]);
-	        		$('#p16').prop('value', board.player1Pits[5]);
-	        		$('#p17').prop('value', board.player1Pits[6]);
-	        		//update player2 pit
-	        		$('#p21').prop('value', board.player2Pits[0]);
-	        		$('#p22').prop('value', board.player2Pits[1]);
-	        		$('#p23').prop('value', board.player2Pits[2]);
-	        		$('#p24').prop('value', board.player2Pits[3]);
-	        		$('#p25').prop('value', board.player2Pits[4]);
-	        		$('#p26').prop('value', board.player2Pits[5]);
-	        		$('#p27').prop('value', board.player2Pits[6]);
-	        		//update the points table
-	        		var player1 = result.player1;
-            		var player2 = result.player2;
-            		updatePointsTable(player1.name, player1.score, player1.moves, 
-            				player2.name, player2.score, player2.moves, result.playState);
+	        		//update player pit
+	        		updatePointsTable(result);
 	        		//rotate board if necessary
 	        		rotateBoard(result.isPlayer1sMove);
 	        		$('#lookUpMessage').css("visibility", "hidden");
