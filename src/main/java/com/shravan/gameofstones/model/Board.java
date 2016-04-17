@@ -89,26 +89,28 @@ public class Board {
     }
 
     /**
-     * Method to see if Player1 is the current winner of the board. Basically
+     * Method to see if Player1 is the current leader of the board. Basically
      * just checks if player1 has more stones in the big pit compared to
      * player2.
      * 
-     * @return True if player1 has won, false if player2 has won or null if no
-     *         winner is established (not properly setup boards or on a draw)
+     * @return True if player1 is leading, false if player2 is leading or null
+     *         if no winner is established (not properly setup boards or on a
+     *         draw)
      */
     @JsonIgnore
-    public Boolean isPlayer1Winner() {
+    public Boolean isPlayer1Leader() {
 
+        Boolean result = false;
         if (player1Pits != null && player1Pits.size() == 7) {
             if (player2Pits != null && player2Pits.size() == 7) {
                 if (player1Pits.get(6) > player2Pits.get(6)) {
-                    return true;
+                    result = true;
                 }
                 if (player1Pits.get(6) == player2Pits.get(6)) {
-                    return null;
+                    result = null;
                 }
                 else {
-                    return false;
+                    result = false;
                 }
             }
             else {
@@ -120,7 +122,7 @@ public class Board {
             log.severe(String.format("Improperly setup board. Player1 pit count: %s",
                 player1Pits != null ? player1Pits.size() : null));
         }
-        return null;
+        return result;
     }
 
     /**

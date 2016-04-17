@@ -254,7 +254,7 @@ public class Play {
                     if (board.isCompleted()) {
                         play.setPlayState(PlayState.COMPLETED);
                     }
-                    Boolean isPlayer1Winner = board.isPlayer1Winner();
+                    Boolean isPlayer1Winner = board.isPlayer1Leader();
                     if (isPlayer1Winner != null) {
                         //set play leaderId
                         if (isPlayer1Winner) {
@@ -265,7 +265,7 @@ public class Play {
                         }
                     }
                     else {
-                        log.info(String.format("Play winner not found for board: %s", play.getBoardId()));
+                        play.leaderId = null;
                     }
                     //update the play
                     play.createOrUpdate();
