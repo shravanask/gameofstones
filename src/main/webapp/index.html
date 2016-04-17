@@ -351,8 +351,10 @@ body {
             		}
             		//update the points table
             		updatePointsTable(result);
-            		//rotate the board if needed
-            		rotateBoard(result.isPlayer1sMove);
+            		if(result.playState != "COMPLETED") {
+            			//rotate the board if needed
+            			rotateBoard(result.isPlayer1sMove);
+            		}
             	}
         	}
         	else if(response.code == 412) {
@@ -395,13 +397,6 @@ body {
 	    		$('#player2Points').html(player2.score);
 	    		$('#player2Moves').html(player2.moves);
 	    	}
-	    	var playState = result.playState;
-	    	if(playState) {
-	    		$('#playState').html(playState);
-	    		if(playState != 'IDLE') {
-	    			$('#abort').prop('disabled', false);
-	    		}
-	    	}
 	    	var board = result.board;
 	    	if(board){
 	    		$('#p11').prop('value', board.player1Pits[0]);
@@ -419,6 +414,26 @@ body {
 	    		$('#p25').prop('value', board.player2Pits[4]);
 	    		$('#p26').prop('value', board.player2Pits[5]);
 	    		$('#p27').html(board.player2Pits[6]);
+	    	}
+	    	var playState = result.playState;
+	    	if(playState) {
+	    		$('#playState').html(playState);
+	    		if(playState != 'IDLE') {
+	    			$('#abort').prop('disabled', false);
+	    		}
+	    		if(playState == "COMPLETED") {
+	    			var message = "";
+	    			if(board.player1Pits[6] > board.player2Pits[6]) {
+	    				message = player1.name + " has won the game!!";
+	    			}
+	    			else if(board.player1Pits[6] < board.player2Pits[6]) {
+	    				message = player2.name + " has won the game!!";
+	    			}
+	    			else {
+	    				message = "Close fight!! Its a draw.";
+	    			}
+	    			$('#lookUpMessage').html(message);
+	    		}
 	    	}
     	}
     }
@@ -499,8 +514,10 @@ body {
 	        		//update player pit
 	        		updatePointsTable(result);
 	        		//rotate board if necessary
-	        		rotateBoard(result.isPlayer1sMove);
-	        		$('#lookUpMessage').css("visibility", "hidden");
+	        		if(result.playState != "COMPLETED") {
+	        			rotateBoard(result.isPlayer1sMove);
+	        			$('#lookUpMessage').css("visibility", "hidden");
+	        		}
 	        	}
 	    	}
     	}
