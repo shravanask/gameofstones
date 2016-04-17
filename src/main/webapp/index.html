@@ -255,10 +255,16 @@ body {
         });
         //function for join a game
         $('#joinGame').click(function () {
+        	$('#lookUpMessage').css("visibility", "visible");
+            //check if player with this name is already present
+            if(localStorage.getItem("player1Name") == $('#playerName').val()) {
+            	$('#lookUpMessage').html("Please choose a differnt name, " 
+            			+ $('#playerName').val() + " is already used!");
+            	return;
+            }
             var data = { "name": $('#playerName').val() };
             var requestURL = "/rest/play/twoPlayer/player";
             var validRequest = false;
-        	$('#lookUpMessage').css("visibility", "visible");
         	var localStorageConsole = {
         			"player1Id": localStorage.getItem("player1Id"),
         			"player2Id": localStorage.getItem("player2Id"),
