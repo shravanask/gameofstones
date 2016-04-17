@@ -312,6 +312,21 @@ public class PlayResourceTest extends TestFramework {
     }
 
     /**
+     * A play that is completed must be not switched to aborted
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void abortCompletedPlayTest() throws Exception {
+
+        //start a play and complete it
+        completedPlayTest();
+        RestResponse resetPlay = new PlayResource().resetPlay(playId);
+        assertThat(resetPlay.getCode(), Matchers.is(Status.NOT_ACCEPTABLE.getStatusCode()));
+        assertThat(resetPlay.getResult(), Matchers.nullValue());
+    }
+
+    /**
      * Simple test to see if the play is in {@link PlayState#WAITING} state when
      * only the first player joins in a 2 player game
      * 

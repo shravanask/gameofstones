@@ -126,9 +126,15 @@ public class PlayResource {
         if (playId != null) {
             Play play = Play.getPlay(playId);
             if (play != null) {
-                play.setPlayState(PlayState.ABORTED);
-                play.createOrUpdate();
-                return RestResponse.ok(JSONFormatter.serialize(play.getFullPlayDetails()));
+                if (!Arrays.asList(PlayState.COMPLETED, PlayState.ABORTED).contains(play.getPlayState())) {
+                    play.setPlayState(PlayState.ABORTED);
+                    play.createOrUpdate();
+                    return RestResponse.ok(JSONFormatter.serialize(play.getFullPlayDetails()));
+                }
+                else {
+                    return RestResponse.error(Status.NOT_ACCEPTABLE.getStatusCode(),
+                        String.format("Play: %s is not ongoing to abort! Status:", playId, play.getPlayState()));
+                }
             }
             else {
                 return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(),
