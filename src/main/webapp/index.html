@@ -384,10 +384,11 @@ body {
     });
     //flush existing play from localStorage
     function clearPlay(response) {
+    	console.log("clearing play..");
 		//flush all the localstorage
 		localStorage.clear();
 		window.location.href = window.location.href.split('\?')[0];
-		location.reload();
+		console.log(window.location.href);
 	}
     
     function updatePointsTable(result) {
@@ -467,46 +468,48 @@ body {
     	if(isPlayer1Move == "always") {
     		flip = true
     	}
-    	else if(isPlayer1Move) {
-			var message = localStorage.getItem('player1Name') + ', make your move..';
-			if(playTurn == "player1" && moveMade) {
-				message = 'Nice move,' + localStorage.getItem('player1Name') + '. Make your move again..';
-				moveMade = false;
+    	else if(localStorage.getItem("playState") == "IN_PROGRESS") {
+	    	if(isPlayer1Move) {
+				var message = localStorage.getItem('player1Name') + ', make your move..';
+				if(playTurn == "player1" && moveMade) {
+					message = 'Nice move,' + localStorage.getItem('player1Name') + '. Make your move again..';
+					moveMade = false;
+				}
+				$('#lookUpMessage').html(message);
+				localStorage.setItem("playTurn", "player1");
 			}
-			$('#lookUpMessage').html(message);
-			localStorage.setItem("playTurn", "player1");
-		}
-		else {
-			var message = localStorage.getItem('player2Name') + ', make your move..';
-			if(playTurn == "player2" && moveMade) {
-				message = 'Nice move,' + localStorage.getItem('player2Name') + '. Make your move again..';
-				moveMade = false;
+			else {
+				var message = localStorage.getItem('player2Name') + ', make your move..';
+				if(playTurn == "player2" && moveMade) {
+					message = 'Nice move,' + localStorage.getItem('player2Name') + '. Make your move again..';
+					moveMade = false;
+				}
+				$('#lookUpMessage').html(message);
+				localStorage.setItem("playTurn", "player2");
 			}
-			$('#lookUpMessage').html(message);
-			localStorage.setItem("playTurn", "player2");
-		}
-    	//flip the board based on the player view
-    	if(view == "player1") {
-    		if(alreadyFlipped) {
-    			flip = true;
-    		}
-    	}
-    	else if(view == "player2") {
-    		if(!alreadyFlipped) {
-    			flip = true;
-    		}
-    	}
-    	else if(view == "together") {
-    		if(isPlayer1Move) {
-    			if(alreadyFlipped) {
-    				flip = true;
-    			}
-    		}
-    		else {
-    			if(!alreadyFlipped) {
-    				flip = true;
-    			}
-    		}
+	    	//flip the board based on the player view
+	    	if(view == "player1") {
+	    		if(alreadyFlipped) {
+	    			flip = true;
+	    		}
+	    	}
+	    	else if(view == "player2") {
+	    		if(!alreadyFlipped) {
+	    			flip = true;
+	    		}
+	    	}
+	    	else if(view == "together") {
+	    		if(isPlayer1Move) {
+	    			if(alreadyFlipped) {
+	    				flip = true;
+	    			}
+	    		}
+	    		else {
+	    			if(!alreadyFlipped) {
+	    				flip = true;
+	    			}
+	    		}
+	    	}
     	}
     	console.log('flip: '+ flip + ' isPlayer1Move: ' + isPlayer1Move + ' alreadyFlipped: '+ alreadyFlipped);
     	if(flip) {
@@ -532,6 +535,16 @@ body {
     //make a move method
     function makeMove(isPlayer1, pitIndex) {
     	$('#lookUpMessage').css("visibility", "visible");
+    	//check the view to see if the player can make a move here
+    	var view = localStorage.getItem("view");
+    	if(view == "player1" && !isPlayer1) {
+    		$('#lookUpMessage').html(localStorage.getItem("player2Name") + " cannot make a move in this browser");
+    		return;
+    	}
+    	else if(view == "player2" && isPlayer1) {
+    		$('#lookUpMessage').html(localStorage.getItem("player1Name") + " cannot make a move in this browser");
+    		return;
+    	}
     	var elementId = 'p' + (isPlayer1 == true ? 1 : 2) + (pitIndex + 1);
     	var pitValue = $('#' + elementId).attr("value");
     	if(pitValue == 0) {
