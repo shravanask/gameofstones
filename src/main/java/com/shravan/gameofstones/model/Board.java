@@ -9,6 +9,7 @@ import org.jongo.marshall.jackson.oid.MongoId;
 import org.jongo.marshall.jackson.oid.MongoObjectId;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.shravan.gameofstones.core.Mongodb;
+import com.shravan.gameofstones.exception.BadMoveException;
 
 /**
  * Simple class to encapsulate the board data. (Player pits, and the number of
@@ -217,8 +218,10 @@ public class Board {
      *            The 0-based pit index on which the Player is making his move
      * @return Returns true if this player is given a chance again. Null if some
      *         error or precondition did not match
+     * @throws BadMoveException
+     *             This exception is thrown when a move is not allowed.
      */
-    public Boolean makeMove(boolean isPlayer1sMove, Integer pitIndex) {
+    public Boolean makeMove(boolean isPlayer1sMove, Integer pitIndex) throws BadMoveException {
 
         Boolean result = false;
         List<Integer> playerPit = null;
@@ -234,32 +237,39 @@ public class Board {
         if (playerPit != null && pitIndex >= 0 && pitIndex <= 5 && playerPit.size() == 7 &&
             opponentPlayerPit.size() == 7) {
             Integer stonesInPit = playerPit.get(pitIndex);
-            playerPit.set(pitIndex, 0);
-            while (stonesInPit != 0) {
-                //move one stone to the right
-                pitIndex++;
-                //if pitIndex has come to the right most big pit, reset it to first small pit
-                if (pitIndex == 7) {
-                    pitIndex = 0;
+            //check if the number of stones are greater than 0
+            if (stonesInPit == 0) {
+                throw new BadMoveException(String.format("Player%s move at index: %s is not allowed. No stones here.",
+                    isPlayer1sMove ? 1 : 2, pitIndex));
+            }
+            else {
+                playerPit.set(pitIndex, 0);
+                while (stonesInPit != 0) {
+                    //move one stone to the right
+                    pitIndex++;
+                    //if pitIndex has come to the right most big pit, reset it to first small pit
+                    if (pitIndex == 7) {
+                        pitIndex = 0;
+                    }
+                    playerPit.set(pitIndex, playerPit.get(pitIndex) + 1);
+                    stonesInPit--;
                 }
-                playerPit.set(pitIndex, playerPit.get(pitIndex) + 1);
-                stonesInPit--;
+                //if pitIndex is the last big pit, give this user to playAgain
+                if (pitIndex == 6) {
+                    result = true;
+                }
+                //move all the stones from the opponent pit to this players, if the current pit has one stone after the move
+                else if (playerPit.get(pitIndex) == 1) {
+                    //the opponent is ofcourse indexes in opposite order. E.g. 0 is 5, 1 is 4,..., and 5 is 0
+                    Integer opponentIndex = 5 - pitIndex;
+                    playerPit.set(pitIndex, opponentPlayerPit.get(opponentIndex) + 1);
+                    //remove all stones in the opponent pit
+                    opponentPlayerPit.set(opponentIndex, 0);
+                    result = false;
+                }
+                //update the entity
+                createOrUpdate();
             }
-            //if pitIndex is the last big pit, give this user to playAgain
-            if (pitIndex == 6) {
-                result = true;
-            }
-            //move all the stones from the opponent pit to this players, if the current pit has one stone after the move
-            else if (playerPit.get(pitIndex) == 1) {
-                //the opponent is ofcourse indexes in opposite order. E.g. 0 is 5, 1 is 4,..., and 5 is 0
-                Integer opponentIndex = 5 - pitIndex;
-                playerPit.set(pitIndex, opponentPlayerPit.get(opponentIndex) + 1);
-                //remove all stones in the opponent pit
-                opponentPlayerPit.set(opponentIndex, 0);
-                result = false;
-            }
-            //update the entity
-            createOrUpdate();
         }
         else {
             log.severe(String.format("Cannot perform move. Invalid number of pits: %s, %s pitIndex: %s. Ignoring move",

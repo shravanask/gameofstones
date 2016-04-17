@@ -215,7 +215,7 @@ public class PlayResourceTest extends TestFramework {
      * @throws Exception
      */
     @Test
-    public void player1MakesSingleStoneMove() throws Exception {
+    public void player1MakesSingleStoneMoveTest() throws Exception {
 
         //make 3rounds of the game. Player1 has the chance again
         player2MakeFirstMoveTest();
@@ -236,6 +236,23 @@ public class PlayResourceTest extends TestFramework {
         //check the scores of the play
         assertThat(player1.getScore(), Matchers.is(2));
         assertThat(player2.getScore(), Matchers.is(1));
+    }
+
+    /**
+     * Simple test to see if a player trying to make a move from a pit having
+     * zero stones is not allowed.
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void playerMakesZeroStoneMoveTest() throws Exception {
+
+        //make few rounds of the game. Call earlier sequence of plays
+        player1MakesSingleStoneMoveTest();
+        //make player2 try to attempt make a move at 5th pit (4th index)
+        RestResponse makeMoveResponse = new PlayResource().makeMove(playId, player2Id, 4);
+        assertThat(makeMoveResponse.getResult(), Matchers.nullValue());
+        assertThat(makeMoveResponse.getCode(), Matchers.is(Status.BAD_REQUEST.getStatusCode()));
     }
 
     /**

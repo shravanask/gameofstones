@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.shravan.gameofstones.core.Mongodb;
+import com.shravan.gameofstones.exception.BadMoveException;
 import com.shravan.gameofstones.util.JSONFormatter;
 
 /**
@@ -356,10 +357,11 @@ public class Play {
      *            PlayerId who is performing the move
      * @param pitIndex
      *            The 0-based pit index on which the Player is making his move
-     * @return Returns the updated Play with {@link Play#playState} and
-     *         {@link Play#leaderId}.
+     * @throws BadMoveException
+     *             This exception is thrown when attempting a bad move. E.g.
+     *             Playing at an index with 0 stones
      */
-    public void makeMove(String playerId, Integer pitIndex) {
+    public void makeMove(String playerId, Integer pitIndex) throws BadMoveException {
 
         if (playerId != null) {
             //fetch the board in this play

@@ -13,6 +13,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 import com.shravan.gameofstones.core.RestResponse;
+import com.shravan.gameofstones.exception.BadMoveException;
 import com.shravan.gameofstones.model.Play;
 import com.shravan.gameofstones.model.Play.PlayState;
 import com.shravan.gameofstones.model.Player;
@@ -167,8 +168,13 @@ public class PlayResource {
                     boolean isPlayer1ValidMove = play.isPlayer1sMove() && play.getPlayer1Id().equals(playerId);
                     boolean isPlayer2ValidMove = !play.isPlayer1sMove() && play.getPlayer2Id().equals(playerId);
                     if (isPlayer1ValidMove || isPlayer2ValidMove) {
-                        play.makeMove(playerId, pitIndex);
-                        return RestResponse.ok(JSONFormatter.serialize(play.getFullPlayDetails()));
+                        try {
+                            play.makeMove(playerId, pitIndex);
+                            return RestResponse.ok(JSONFormatter.serialize(play.getFullPlayDetails()));
+                        }
+                        catch (BadMoveException e) {
+                            return RestResponse.error(Status.BAD_REQUEST.getStatusCode(), e.getMessage());
+                        }
                     }
                     //check if the player is currently not part of the game
                     else if (Arrays.asList(play.getPlayer1Id(), play.getPlayer2Id()).contains(playerId)) {
