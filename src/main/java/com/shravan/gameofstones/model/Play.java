@@ -245,6 +245,10 @@ public class Play {
             if (play != null) {
                 Board board = play.getBoard();
                 if (board != null) {
+                    //set play state
+                    if (board.isCompleted()) {
+                        play.setPlayState(PlayState.COMPLETED);
+                    }
                     Boolean isPlayer1Winner = board.isPlayer1Winner();
                     if (isPlayer1Winner != null) {
                         //set play leaderId
@@ -253,10 +257,6 @@ public class Play {
                         }
                         else {
                             play.leaderId = play.getPlayer2Id();
-                        }
-                        //set play state
-                        if (board.isCompleted()) {
-                            play.setPlayState(PlayState.COMPLETED);
                         }
                     }
                     else {

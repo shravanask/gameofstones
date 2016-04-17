@@ -280,9 +280,9 @@ public class PlayResourceTest extends TestFramework {
         Board board = play.getBoard();
 
         //update player2 with no stones left in the small pits
-        List<Integer> player2Pits = board.getPlayer2Pits();
+        List<Integer> player1Pits = board.getPlayer1Pits();
         for (int pitIndex = 0; pitIndex < 6; pitIndex++) {
-            player2Pits.set(pitIndex, 0);
+            player1Pits.set(pitIndex, 0);
         }
         //update the board
         board.createOrUpdate();
@@ -291,7 +291,7 @@ public class PlayResourceTest extends TestFramework {
         //validate that the play is updated with completed status and leaderId as player1
         play = Play.getPlay(playId);
         assertThat(play.getPlayState(), Matchers.is(PlayState.COMPLETED));
-        assertThat(play.getLeaderId(), Matchers.is(player1Id));
+        assertThat(play.getLeaderId(), Matchers.is(player2Id));
     }
 
     /**
