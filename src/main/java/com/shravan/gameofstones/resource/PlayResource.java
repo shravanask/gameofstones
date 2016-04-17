@@ -16,6 +16,7 @@ import com.shravan.gameofstones.core.RestResponse;
 import com.shravan.gameofstones.model.Play;
 import com.shravan.gameofstones.model.Play.PlayState;
 import com.shravan.gameofstones.model.Player;
+import com.shravan.gameofstones.util.JSONFormatter;
 
 @Path("play")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -44,7 +45,7 @@ public class PlayResource {
         if (playId != null) {
             Play play = Play.getPlay(playId);
             if (play != null) {
-                return RestResponse.ok(play.getFullPlayDetails());
+                return RestResponse.ok(JSONFormatter.serialize(play.getFullPlayDetails()));
             }
             else {
                 return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(),
@@ -74,8 +75,8 @@ public class PlayResource {
 
         Play play = Play.getPlay(playId);
         if (player != null) {
-            Play twoPlayerPlay = Play.addPlayerInPlay(play, player);
-            return RestResponse.ok(twoPlayerPlay.getFullPlayDetails());
+            play = Play.addPlayerInPlay(play, player);
+            return RestResponse.ok(JSONFormatter.serialize(play.getFullPlayDetails()));
         }
         else {
             return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(),
@@ -100,7 +101,7 @@ public class PlayResource {
         if (twoPlayerGamePlayload != null && twoPlayerGamePlayload.size() == 2) {
             Play twoPlayerPlay = Play.startTwoPlayerGame(twoPlayerGamePlayload.get("1"),
                 twoPlayerGamePlayload.get("2"));
-            return RestResponse.ok(twoPlayerPlay.getFullPlayDetails());
+            return RestResponse.ok(JSONFormatter.serialize(twoPlayerPlay.getFullPlayDetails()));
         }
         else {
             return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(),
@@ -125,7 +126,7 @@ public class PlayResource {
             if (play != null) {
                 play.setPlayState(PlayState.ABORTED);
                 play.createOrUpdate();
-                return RestResponse.ok(play.getFullPlayDetails());
+                return RestResponse.ok(JSONFormatter.serialize(play.getFullPlayDetails()));
             }
             else {
                 return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(),
@@ -157,19 +158,35 @@ public class PlayResource {
 
         if (playId != null) {
             Play play = Play.getPlay(playId);
-            if (play != null && PlayState.IN_PROGRESS.equals(play.getPlayState())) {
-                if (Arrays.asList(play.getPlayer1Id(), play.getPlayer2Id()).contains(playerId)) {
-                    play.makeMove(playerId, pitIndex);
-                    return RestResponse.ok(play.getFullPlayDetails());
+            //check if the play is indeed found
+            if (play != null) {
+                //check if the play is already inprogress, not waiting for players etc
+                if (PlayState.IN_PROGRESS.equals(play.getPlayState())) {
+                    //make sure if the move is performed by the right player (and not player2 making player1s)
+                    boolean isPlayer1ValidMove = play.isPlayer1sMove() && play.getPlayer1Id().equals(playerId);
+                    boolean isPlayer2ValidMove = !play.isPlayer1sMove() && play.getPlayer2Id().equals(playerId);
+                    if (isPlayer1ValidMove || isPlayer2ValidMove) {
+                        play.makeMove(playerId, pitIndex);
+                        return RestResponse.ok(JSONFormatter.serialize(play.getFullPlayDetails()));
+                    }
+                    //check if the player is currently not part of the game
+                    else if (Arrays.asList(play.getPlayer1Id(), play.getPlayer2Id()).contains(playerId)) {
+                        return RestResponse.error(Status.NOT_ACCEPTABLE.getStatusCode(),
+                            String.format("Its not Player with id: %s chance for a move.", playerId, play.getId()));
+                    }
+                    else {
+                        return RestResponse.error(Status.FORBIDDEN.getStatusCode(), String.format(
+                            "Given Player with id: %s is not part of Play with id: %s", playerId, play.getId()));
+                    }
                 }
                 else {
-                    return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(),
-                        String.format("Given Player with id: %s not part of Play with id: %s", playerId, play.getId()));
+                    return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(), String.format(
+                        "The given Play with id: %s is not inprogress. Status: %s", play.getId(), play.getPlayState()));
                 }
             }
             else {
-                return RestResponse.error(Status.PRECONDITION_FAILED.getStatusCode(), String.format(
-                    "No inprogress Play with id: %s found to make a move. State: %s", playId, play.getPlayState()));
+                return RestResponse.error(Status.NOT_FOUND.getStatusCode(),
+                    String.format("No Play with id: %s found to make a move.", playId));
             }
         }
         else {
