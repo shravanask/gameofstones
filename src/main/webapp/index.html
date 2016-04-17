@@ -491,12 +491,18 @@ body {
     
     //make a move method
     function makeMove(isPlayer1, pitIndex) {
-    	console.log((isPlayer1 ? 'Player1' : 'Player2') + ' checking if a move is possible, at pit:'+ pitIndex);
+    	$('#lookUpMessage').css("visibility", "visible");
+    	var elementId = 'p' + (isPlayer1 == true ? 1 : 2) + (pitIndex + 1);
+    	var pitValue = $('#' + elementId).attr("value");
+    	if(pitValue == 0) {
+    		$('#lookUpMessage').html('No stones here, think of a different pit!');
+    		return;
+    	}
+    	console.log('ElementId: '+ elementId + ' value: ' + $('#' + elementId).attr("value"));
     	if(localStorage.getItem("playId") && localStorage.getItem("player1Id") && localStorage.getItem("player2Id")) {
-    		$('#lookUpMessage').css("visibility", "visible");
    			$('#lookUpMessage').html('Making your move..');
-   			var playerId = isPlayer1 ? localStorage.getItem("player1Id") : localStorage.getItem("player2Id");
-	    	
+   			var playerId = isPlayer1 == true ? localStorage.getItem("player1Id") 
+   					: localStorage.getItem("player2Id");
 	    	$.ajax({
 	            url: '/rest/play/makeMove/' + localStorage.getItem('playId') + '/' + playerId + '/' + pitIndex,
 	            type: 'POST',
