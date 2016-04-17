@@ -214,8 +214,12 @@ public class Play {
                 }
             }
         }
-        playNode.putPOJO("player1", getPlayer1());
-        playNode.putPOJO("player2", getPlayer2());
+        if(player1 != null) {
+            playNode.putPOJO("player1", player1);
+        }
+        if(player2 != null) {
+            playNode.putPOJO("player2", player2);
+        }
         return playNode;
     }
 
