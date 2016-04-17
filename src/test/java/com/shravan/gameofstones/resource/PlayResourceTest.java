@@ -10,7 +10,6 @@ import javax.ws.rs.core.Response.Status;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.shravan.gameofstones.core.RestResponse;
 import com.shravan.gameofstones.model.Board;
@@ -299,8 +298,7 @@ public class PlayResourceTest extends TestFramework {
      * Simple test to see if the play is in {@link PlayState#WAITING} state when
      * only the first player joins in a 2 player game
      * 
-     * @throws IOException
-     * @throws JsonProcessingException
+     * @throws Exception
      */
     @Test
     public void twoPlayerGameFirstJoinsTest() throws Exception {
@@ -325,7 +323,9 @@ public class PlayResourceTest extends TestFramework {
 
     /**
      * Simple test to see if the play is in {@link PlayState#IN_PROGRESS} state
-     * when both players have joined @throws IOException @throws
+     * when both players have joined
+     * 
+     * @throws IOException
      */
     @Test
     public void twoPlayerGameSecondJoinsTest() throws Exception {
