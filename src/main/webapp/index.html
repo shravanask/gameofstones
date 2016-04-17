@@ -154,7 +154,7 @@ body {
 						</button>
 						<button class="btn btn-inverse" id="abort" type="reset" disabled="disabled" style="vertical-align: top;">Quit!
 						</button>
-						<div class="span5" align="center" style="text-align: left;" id="lookUpMessage">
+						<div class="span10" align="center" style="text-align: left;" id="lookUpMessage">
 						</div>
 					</div>
 				</div>
@@ -199,7 +199,8 @@ body {
 	<script>
 	//make a clone of the boardDiv
 	var boardDivClone = $("#boardDiv").clone();
-	
+	//keep a global flag to see if a move was made. Uglyyy!!
+	var moveMade = false;
     $(document).ready(function () {
     	
         function supports_html5_storage() {
@@ -273,7 +274,12 @@ body {
             	requestURL += "?playId=" + localStorage.getItem("playId");
             	console.log("Adding player2" + $('#playerName').val() + "to play: " + localStorage.getItem("playId"));
 	            validRequest = true;
-	            localStorage.setItem("view", "together");
+	            if(getUrlParameter("playId") == null) {
+	            	localStorage.setItem("view", "together");
+	            }
+	            else {
+	            	localStorage.setItem("view", "player2");
+	            }
             }
             else if(localStorage.getItem("player1Id") && localStorage.getItem("player2Id")){
                 $('#lookUpMessage').html("Play: " + localStorage.getItem("playId") + " already started!");
@@ -306,7 +312,11 @@ body {
                 	if(result.player1 & result.player1.name) {
                 		player1Name = result.player1.name;
                 	}
-                    $('#lookUpMessage').html("Player1: " + player1Name + " joined!");		
+                	var message = "Player1: " + player1Name + " joined!";
+                	if(getUrlParameter("playId") == null) {
+                		message += " Invite url: "+ window.location.href + "?playId=" + result.id; 
+                	}
+                    $('#lookUpMessage').html(message);
             	}
             	if(result.player2Id) {
                     $('#lookUpMessage').html("Game started!");
@@ -371,15 +381,9 @@ body {
     //flush existing play from localStorage
     function clearPlay(response) {
 		//flush all the localstorage
-		if(response && response.code == 200) {
-			localStorage.clear();
-			//enable the join button
-			$('#joinGame').prop('disabled', false);
-			//clear the points table
-			$('#boardDiv').replaceWith(boardDivClone.clone());
-			$("#playState").html("IDLE");
-			$('#abort').prop('disabled', true);
-		}
+		localStorage.clear();
+		window.location.href = window.location.href.split('\?')[0];
+		location.reload();
 	}
     
     function updatePointsTable(result) {
@@ -392,7 +396,7 @@ body {
 	    		$('#player1Moves').html(player1.moves);
 	    	}
 	    	var player2 = result.player2;
-	    	if(player2Name) {
+	    	if(player2) {
 	    		$('#player2Name').html(player2.name);
 	    		$('#player2Points').html(player2.score);
 	    		$('#player2Moves').html(player2.moves);
@@ -436,9 +440,7 @@ body {
 	    			//show alert message to start a new game
 	    			var restartConfirmation = confirm("This game is over. Restart?");
 					if (restartConfirmation == true) {
-						var response = {};
-						response.code = 200;
-						clearPlay(response);
+						clearPlay();
 					}
 	    		}
 	    	}
@@ -456,34 +458,52 @@ body {
     	//save stuff in the memory
 		$('#lookUpMessage').css("visibility", "visible");
 		var playTurn = localStorage.getItem("playTurn");
+		var view = localStorage.getItem("view");
     	var flip = false;
     	if(isPlayer1Move == "always") {
     		flip = true
     	}
     	else if(isPlayer1Move) {
 			var message = localStorage.getItem('player1Name') + ', make your move..';
-			if(playTurn == "player1") {
+			if(playTurn == "player1" && moveMade) {
 				message = 'Nice move,' + localStorage.getItem('player1Name') + '. Make your move again..';
+				moveMade = false;
 			}
 			$('#lookUpMessage').html(message);
 			localStorage.setItem("playTurn", "player1");
-			//if the board is flipped and its player1s turn, flip it again.
-			if(alreadyFlipped) {
-				flip = true;
-			}
 		}
 		else {
 			var message = localStorage.getItem('player2Name') + ', make your move..';
-			if(playTurn == "player2") {
+			if(playTurn == "player2" && moveMade) {
 				message = 'Nice move,' + localStorage.getItem('player2Name') + '. Make your move again..';
+				moveMade = false;
 			}
 			$('#lookUpMessage').html(message);
 			localStorage.setItem("playTurn", "player2");
-    		//if the board is not already flipped and its player2s turn, flip it.
-    		if(!alreadyFlipped) {
-   	    		flip = true;
-        	}
 		}
+    	//flip the board based on the player view
+    	if(view == "player1") {
+    		if(alreadyFlipped) {
+    			flip = true;
+    		}
+    	}
+    	else if(view == "player2") {
+    		if(!alreadyFlipped) {
+    			flip = true;
+    		}
+    	}
+    	else if(view == "together") {
+    		if(isPlayer1Move) {
+    			if(alreadyFlipped) {
+    				flip = true;
+    			}
+    		}
+    		else {
+    			if(!alreadyFlipped) {
+    				flip = true;
+    			}
+    		}
+    	}
     	console.log('flip: '+ flip + ' isPlayer1Move: ' + isPlayer1Move + ' alreadyFlipped: '+ alreadyFlipped);
     	if(flip) {
     		document.getElementById('boardDiv').classList.toggle('rotated');
@@ -529,6 +549,8 @@ body {
 	        });
 	    	
 	    	function successfulMove(response) {
+	    		//set the global move flag to true when the move is successful
+	    		moveMade = true;
 	    		console.log(JSON.stringify(response));
 	        	if(response.code == 200) {
 	        		var result = JSON.parse(response.result);
