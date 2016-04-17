@@ -3,6 +3,7 @@ package com.shravan.gameofstones.model;
 import org.bson.types.ObjectId;
 import org.jongo.marshall.jackson.oid.MongoId;
 import org.jongo.marshall.jackson.oid.MongoObjectId;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.shravan.gameofstones.core.Mongodb;
 
 public class Player {
@@ -11,9 +12,8 @@ public class Player {
     @MongoObjectId
     private String id;
     private String name;
-    private Integer score;
+    private Integer score = 0;
     private Integer moves = 0;
-    private Boolean isWinner = false;
 
     //simple constructors
     public Player() {
@@ -65,16 +65,6 @@ public class Player {
         this.moves = moves;
     }
 
-    public Boolean getIsWinner() {
-
-        return isWinner;
-    }
-
-    public void setIsWinner(Boolean isWinner) {
-
-        this.isWinner = isWinner;
-    }
-
     //mongo access methods
     /**
      * Simple method to create or update this entity in the mongoDb
@@ -104,11 +94,12 @@ public class Player {
     /**
      * Simple method to increment the move counter for this Player
      */
-    public void addMove(boolean updateDb) {
+    @JsonIgnore
+    public void addMove(boolean updateDB) {
 
         moves = moves != null ? moves : 0;
         moves++;
-        if (updateDb) {
+        if (updateDB) {
             createOrUpdate();
         }
     }

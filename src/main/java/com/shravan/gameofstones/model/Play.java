@@ -191,11 +191,30 @@ public class Play {
     public ObjectNode getFullPlayDetails() {
 
         ObjectNode playNode = JSONFormatter.getMapper().valueToTree(this);
+        //fetch board details
+        Board board = getBoard();
+        playNode.putPOJO("board", board);
         //fetch player details
+        Player player1 = getPlayer1();
+        Player player2 = getPlayer2();
+        if (board != null) {
+            //update the player scores only if there is a change
+            if (player1 != null && board.getPlayer1Pits() != null) { //null checks
+                //check if player1 score has changed
+                if (board.getPlayer1Pits().size() == 7 && board.getPlayer1Pits().get(6) != player1.getScore()) {
+                    player1.setScore(board.getPlayer1Pits().get(6));
+                    player1.createOrUpdate();
+                }
+            }
+            if (player2 != null && board.getPlayer2Pits() != null) { //null checks
+                if (board.getPlayer2Pits().size() == 7 && board.getPlayer2Pits().get(6) != player2.getScore()) {
+                    player2.setScore(board.getPlayer2Pits().get(6));
+                    player2.createOrUpdate();
+                }
+            }
+        }
         playNode.putPOJO("player1", getPlayer1());
         playNode.putPOJO("player2", getPlayer2());
-        //fetch board details
-        playNode.putPOJO("board", getBoard());
         return playNode;
     }
 

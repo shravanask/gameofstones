@@ -19,7 +19,7 @@
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>Rolling Stones Servlet</servlet-name>
-		<url-pattern>/*</url-pattern>
+		<url-pattern>/rest/*</url-pattern>
 	</servlet-mapping>
 	<servlet>
 		<servlet-name>Static Servlet</servlet-name>
@@ -30,4 +30,7 @@
 		<servlet-name>Static Servlet</servlet-name>
 		<url-pattern>/static/*</url-pattern>
 	</servlet-mapping>
+	<welcome-file-list>
+		<welcome-file>index.html</welcome-file>
+	</welcome-file-list>
 </web-app>

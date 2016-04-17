@@ -220,7 +220,7 @@ public class Board {
      */
     public Boolean makeMove(boolean isPlayer1sMove, Integer pitIndex) {
 
-        Boolean result = null;
+        Boolean result = false;
         List<Integer> playerPit = null;
         List<Integer> opponentPlayerPit = null;
         if (isPlayer1sMove) {
@@ -235,7 +235,7 @@ public class Board {
             opponentPlayerPit.size() == 7) {
             Integer stonesInPit = playerPit.get(pitIndex);
             playerPit.set(pitIndex, 0);
-            for (int pitMoveCount = 0; pitMoveCount < 6 || stonesInPit != 0; pitMoveCount++, stonesInPit--) {
+            while (stonesInPit != 0) {
                 //move one stone to the right
                 pitIndex++;
                 //if pitIndex has come to the right most big pit, reset it to first small pit
@@ -243,6 +243,7 @@ public class Board {
                     pitIndex = 0;
                 }
                 playerPit.set(pitIndex, playerPit.get(pitIndex) + 1);
+                stonesInPit--;
             }
             //if pitIndex is the last big pit, give this user to playAgain
             if (pitIndex == 6) {
