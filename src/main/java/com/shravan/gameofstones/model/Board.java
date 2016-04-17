@@ -134,7 +134,15 @@ public class Board {
         boolean isStonesLeftForPlayer1 = isStonesLeft(player1Pits);
         boolean isStonesLeftForPlayer2 = isStonesLeft(player2Pits);
         //if either player1 or player2 has no stones left, then game is completed
-        return !isStonesLeftForPlayer1 || !isStonesLeftForPlayer2;
+        boolean isCompleted = !isStonesLeftForPlayer1 || !isStonesLeftForPlayer2;
+        //if the board is completed, move all the stones from the small pits to the big pit
+        if (isCompleted) {
+            moveStonesToBigPit(player1Pits);
+            moveStonesToBigPit(player2Pits);
+            //update board in mongo
+            createOrUpdate();
+        }
+        return isCompleted;
     }
 
     //private methods
@@ -172,6 +180,26 @@ public class Board {
             return true;
         }
         return false;
+    }
+
+    /**
+     * This will move all stones from small pits (index 0...5) to the big pit
+     * (index 6)
+     * 
+     * @param playerPits
+     * @return The updated pits after the move
+     */
+    private static List<Integer> moveStonesToBigPit(List<Integer> playerPits) {
+
+        if (playerPits != null && playerPits.size() == 7) {
+            for (int pitIndex = 0; pitIndex < 6; pitIndex++) {
+                //fetch stones in bit pit
+                Integer stonesInBigPit = playerPits.get(6);
+                playerPits.set(6, stonesInBigPit + playerPits.get(pitIndex));
+                playerPits.set(pitIndex, 0);
+            }
+        }
+        return playerPits;
     }
 
     //mongo access methods
