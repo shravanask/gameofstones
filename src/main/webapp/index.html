@@ -66,6 +66,14 @@ body {
     -o-transform : rotate(180deg); 
     transform : rotate(180deg); 
 }
+#p11.rotated,#p12.rotated,#p13.rotated,#p14.rotated,#p15.rotated,#p16.rotated,#p17.rotated,
+#p21.rotated,#p22.rotated,#p23.rotated,#p24.rotated,#p25.rotated,#p26.rotated,#p27.rotated {
+    -webkit-transform : rotate(180deg); 
+    -moz-transform : rotate(180deg); 
+    -ms-transform : rotate(180deg); 
+    -o-transform : rotate(180deg); 
+    transform : rotate(180deg); 
+}
 .imagewrap {display:inline-block;position:relative;}
 .p11 {position:absolute;bottom:33%;left:21%;}
 .p12 {position:absolute;bottom:33%;left:32%;}
@@ -155,21 +163,21 @@ body {
 				<div class="imagewrap">
 					<div class="imagewrap" id="boardDiv">
 						<img alt="Game of Stones" src="/static/GameOfStones1.png" id="board">
+						<input type="button" id="p11" class="p11" value = "6" onclick="makeMove(true, 0)"/>
+						<input type="button" id="p12" class="p12" value = "6" onclick="makeMove(true, 1)"/>
+						<input type="button" id="p13" class="p13" value = "6" onclick="makeMove(true, 2)"/>
+						<input type="button" id="p14" class="p14" value = "6" onclick="makeMove(true, 3)"/>
+						<input type="button" id="p15" class="p15" value = "6" onclick="makeMove(true, 4)"/>
+						<input type="button" id="p16" class="p16" value = "6" onclick="makeMove(true, 5)"/>
+						<label id="p17" class="p17">0</label>
+						<input type="button" id="p21" class="p21" value = "6" onclick="makeMove(false, 0)"/>
+						<input type="button" id="p22" class="p22" value = "6" onclick="makeMove(false, 1)"/>
+						<input type="button" id="p23" class="p23" value = "6" onclick="makeMove(false, 2)"/>
+						<input type="button" id="p24" class="p24" value = "6" onclick="makeMove(false, 3)"/>
+						<input type="button" id="p25" class="p25" value = "6" onclick="makeMove(false, 4)"/>
+						<input type="button" id="p26" class="p26" value = "6" onclick="makeMove(false, 5)"/>
+						<label id="p27" class="p27">0</label>
 					</div>
-					<input type="button" id="p11" class="p11" value = "6" onclick="makeMove(true, 0)"/>
-					<input type="button" id="p12" class="p12" value = "6" onclick="makeMove(true, 1)"/>
-					<input type="button" id="p13" class="p13" value = "6" onclick="makeMove(true, 2)"/>
-					<input type="button" id="p14" class="p14" value = "6" onclick="makeMove(true, 3)"/>
-					<input type="button" id="p15" class="p15" value = "6" onclick="makeMove(true, 4)"/>
-					<input type="button" id="p16" class="p16" value = "6" onclick="makeMove(true, 5)"/>
-					<label id="p17" class="p17">0</label>
-					<input type="button" id="p21" class="p21" value = "6" onclick="makeMove(false, 0)"/>
-					<input type="button" id="p22" class="p22" value = "6" onclick="makeMove(false, 1)"/>
-					<input type="button" id="p23" class="p23" value = "6" onclick="makeMove(false, 2)"/>
-					<input type="button" id="p24" class="p24" value = "6" onclick="makeMove(false, 3)"/>
-					<input type="button" id="p25" class="p25" value = "6" onclick="makeMove(false, 4)"/>
-					<input type="button" id="p26" class="p26" value = "6" onclick="makeMove(false, 5)"/>
-					<label id="p27" class="p27">0</label>
 					<button class="flip btn-inverse" type="reset" onclick="rotateBoard('always');"><i class="icon-white icon-repeat"></i></button>
 				</div>
 			</div>
@@ -342,10 +350,6 @@ body {
             			localStorage.setItem("playState", result.playState);
             		}
             		//update the points table
-            		/* $('#player1Moves').html(result.player1.moves);
-            		$('#player2Moves').html(result.player2.moves);
-            		$('#player1Points').html(result.player1.score);
-            		$('#player2Points').html(result.player2.score); */
             		updatePointsTable(result);
             		//rotate the board if needed
             		rotateBoard(result.isPlayer1sMove);
@@ -400,7 +404,6 @@ body {
 	    	}
 	    	var board = result.board;
 	    	if(board){
-	    		console.log("board.player1Pits[0]" + board.player1Pits[0]);
 	    		$('#p11').prop('value', board.player1Pits[0]);
 	    		$('#p12').prop('value', board.player1Pits[1]);
 	    		$('#p13').prop('value', board.player1Pits[2]);
@@ -430,23 +433,44 @@ body {
     function rotateBoard(isPlayer1Move) {
     	//save stuff in the memory
 		$('#lookUpMessage').css("visibility", "visible");
-    	if(isPlayer1Move) {
+    	var flip = false;
+    	if(isPlayer1Move == "always") {
+    		flip = true
+    	}
+    	else if(isPlayer1Move) {
 			localStorage.setItem("playTurn", "player1");
-			$('#lookUpMessage').html(localStorage.getItem('player1Name') + ', make your move..')
+			$('#lookUpMessage').html(localStorage.getItem('player1Name') + ', make your move..');
+			//if the board is flipped and its player1s turn, flip it again.
+			if(alreadyFlipped) {
+				flip = true;
+			}
 		}
 		else {
 			localStorage.setItem("playTurn", "player2");
-			$('#lookUpMessage').html(localStorage.getItem('player2Name') + ', make your move..')
+    		$('#lookUpMessage').html(localStorage.getItem('player2Name') + ', make your move..');
+    		//if the board is not already flipped and its player2s turn, flip it.
+    		if(!alreadyFlipped) {
+   	    		flip = true;
+        	}
 		}
-    	if(isPlayer1Move == 'always') {
+    	console.log('flip: '+ flip + ' isPlayer1Move: ' + isPlayer1Move + ' alreadyFlipped: '+ alreadyFlipped);
+    	if(flip) {
     		document.getElementById('boardDiv').classList.toggle('rotated');
-    	}
-    	if(localStorage.getItem("view") == "together" && !isPlayer1Move) {
-    		document.getElementById('boardDiv').classList.toggle('rotated');			
-    	}
-    	else if(localStorage.getItem("view") == "player2" && !alreadyFlipped) {
-    		document.getElementById('boardDiv').classList.toggle('rotated');
-    		alreadyFlipped = true;
+    		document.getElementById('p11').classList.toggle('rotated');
+    		document.getElementById('p12').classList.toggle('rotated');
+    		document.getElementById('p13').classList.toggle('rotated');
+    		document.getElementById('p14').classList.toggle('rotated');
+    		document.getElementById('p15').classList.toggle('rotated');
+    		document.getElementById('p16').classList.toggle('rotated');
+    		document.getElementById('p17').classList.toggle('rotated');
+    		document.getElementById('p21').classList.toggle('rotated');
+    		document.getElementById('p22').classList.toggle('rotated');
+    		document.getElementById('p23').classList.toggle('rotated');
+    		document.getElementById('p24').classList.toggle('rotated');
+    		document.getElementById('p25').classList.toggle('rotated');
+    		document.getElementById('p26').classList.toggle('rotated');
+    		document.getElementById('p27').classList.toggle('rotated');
+    		alreadyFlipped = !alreadyFlipped;
     	}
     }
     
