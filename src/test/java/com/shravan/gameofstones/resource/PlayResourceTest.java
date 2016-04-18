@@ -107,10 +107,9 @@ public class PlayResourceTest extends TestFramework {
         assertThat(makeMoveResponseNode.get("isPlayer1sMove").asBoolean(), Matchers.is(true));
         //assert that player1 has made one moves and player2 has none
         Play play = Play.getPlay(playId);
-        Player player1 = play.getPlayer1();
-        Player player2 = play.getPlayer2();
-        assertThat(player1.getMoves(), Matchers.is(1));
-        assertThat(player2.getMoves(), Matchers.is(0));
+        Board board = play.getBoard();
+        assertThat(board.getPlayer1Moves(), Matchers.is(1));
+        assertThat(board.getPlayer2Moves(), Matchers.is(0));
     }
 
     /**
@@ -169,13 +168,12 @@ public class PlayResourceTest extends TestFramework {
         assertThat(currentPlayBoard.getPlayer2Pits(), Matchers.contains(6, 6, 6, 6, 0, 6, 0));
         //assert that player1 has made two moves and player2 has none
         Play play = Play.getPlay(playId);
-        Player player1 = play.getPlayer1();
-        Player player2 = play.getPlayer2();
-        assertThat(player1.getMoves(), Matchers.is(2));
-        assertThat(player2.getMoves(), Matchers.is(0));
+        Board board = play.getBoard();
+        assertThat(board.getPlayer1Moves(), Matchers.is(2));
+        assertThat(board.getPlayer2Moves(), Matchers.is(0));
         //check the scores of the play
-        assertThat(player1.getScore(), Matchers.is(2));
-        assertThat(player2.getScore(), Matchers.is(0));
+        assertThat(board.getPlayer1Score(), Matchers.is(2));
+        assertThat(board.getPlayer2Score(), Matchers.is(0));
     }
 
     /**
@@ -202,13 +200,12 @@ public class PlayResourceTest extends TestFramework {
         assertThat(currentPlayBoard.getPlayer2Pits(), Matchers.contains(7, 7, 7, 7, 8, 0, 1));
         //assert that player1 has made two moves and player2 has one
         Play play = Play.getPlay(playId);
-        Player player1 = play.getPlayer1();
-        Player player2 = play.getPlayer2();
-        assertThat(player1.getMoves(), Matchers.is(2));
-        assertThat(player2.getMoves(), Matchers.is(1));
+        Board board = play.getBoard();
+        assertThat(board.getPlayer1Moves(), Matchers.is(2));
+        assertThat(board.getPlayer2Moves(), Matchers.is(1));
         //check the scores of the play
-        assertThat(player1.getScore(), Matchers.is(2));
-        assertThat(player2.getScore(), Matchers.is(1));
+        assertThat(board.getPlayer1Score(), Matchers.is(2));
+        assertThat(board.getPlayer2Score(), Matchers.is(1));
     }
 
     /**
@@ -233,12 +230,11 @@ public class PlayResourceTest extends TestFramework {
             Board.class);
         assertThat(currentPlayBoard.getPlayer1Pits(), Matchers.contains(0, 9, 8, 8, 8, 8, 2));
         assertThat(currentPlayBoard.getPlayer2Pits(), Matchers.contains(7, 7, 7, 7, 0, 0, 1));
-        //fetch the players
-        Player player1 = JSONFormatter.convert(makeMoveResponseNode.get("player1"), Player.class);
-        Player player2 = JSONFormatter.convert(makeMoveResponseNode.get("player2"), Player.class);
+        //fetch the board
+        Board board = JSONFormatter.convert(makeMoveResponseNode.get("board"), Board.class);
         //check the scores of the play
-        assertThat(player1.getScore(), Matchers.is(2));
-        assertThat(player2.getScore(), Matchers.is(1));
+        assertThat(board.getPlayer1Score(), Matchers.is(2));
+        assertThat(board.getPlayer2Score(), Matchers.is(1));
     }
 
     /**
@@ -339,7 +335,7 @@ public class PlayResourceTest extends TestFramework {
 
         //based on who is playing next, move all but one stone to big pit
         List<Integer> playerPits = null;
-        if(play.isPlayer1sMove()) {
+        if (play.isPlayer1sMove()) {
             playerPits = board.getPlayer1Pits();
         }
         else {
@@ -352,15 +348,15 @@ public class PlayResourceTest extends TestFramework {
             playerPits.set(pitIndex, 0);
         }
         //keep one stone in the small pit 
-        playerPits.set(6, pitStoneSum + playerPits.get(6) -1);
+        playerPits.set(6, pitStoneSum + playerPits.get(6) - 1);
         playerPits.set(5, 1);
-        
+
         //update the board
         board.createOrUpdate();
 
         //make a move in the last small pit
         new PlayResource().makeMove(playId, play.isPlayer1sMove() ? player1Id : player2Id, 5);
-        
+
         //validate that the play is updated with completed status and leaderId as player1
         play = Play.getPlay(playId);
         assertThat(play.getPlayState(), Matchers.is(PlayState.COMPLETED));
@@ -464,11 +460,12 @@ public class PlayResourceTest extends TestFramework {
         //load the game to see whose play its next
         Play play = Play.getPlay(playId);
         long startTimestamp = System.currentTimeMillis();
-        Integer player1Moves = Player.getPlayer(player1Id).getMoves();
-        Integer player2Moves = Player.getPlayer(player2Id).getMoves();
+        Board board = play.getBoard();
+        Integer player1Moves = board.getPlayer1Moves();
+        Integer player2Moves = board.getPlayer2Moves();
         while (System.currentTimeMillis() - startTimestamp > 0) {
             //make approprepriate move based on who has to play
-            Board board = play.getBoard();
+            board = play.getBoard();
             if (play.isPlayer1sMove()) {
                 play = makeStonePitMove(pickHighestPitIndex, playId, player1Id, board.getPlayer1Pits());
                 player1Moves++;
@@ -483,7 +480,7 @@ public class PlayResourceTest extends TestFramework {
             }
         }
         //assert game statistics
-        Board board = play.getBoard();
+        board = play.getBoard();
         if (PlayState.COMPLETED.equals(play.getPlayState())) {
             //check that all stones are moved to big pit
             for (int pitIndex = 0; pitIndex < 6; pitIndex++) {
@@ -511,30 +508,28 @@ public class PlayResourceTest extends TestFramework {
         assertThat(board.getPlayer1Pits().get(6), Matchers.not(0));
         assertThat(board.getPlayer2Pits().get(6), Matchers.not(0));
 
-        Player player1 = play.getPlayer1();
-        Player player2 = play.getPlayer2();
         //check if leader is updated either case, if the game is completed or not
         if (board.getPlayer1Pits().get(6) > board.getPlayer2Pits().get(6)) {
             assertThat(play.getLeaderId(), Matchers.is(player1Id));
             //check player1 score is greater than player2
-            assertThat(player1.getScore(), Matchers.greaterThan(player2.getScore()));
+            assertThat(board.getPlayer1Score(), Matchers.greaterThan(board.getPlayer2Score()));
         }
         else if (board.getPlayer1Pits().get(6) < board.getPlayer2Pits().get(6)) {
             assertThat(play.getLeaderId(), Matchers.is(player2Id));
             //check player2 score is greater than player1
-            assertThat(player2.getScore(), Matchers.greaterThan(player1.getScore()));
+            assertThat(board.getPlayer2Score(), Matchers.greaterThan(board.getPlayer1Score()));
         }
         else {
             assertThat(play.getLeaderId(), Matchers.nullValue());
             //check player1 score is same as player2
-            assertThat(player1.getScore(), Matchers.is(player2.getScore()));
+            assertThat(board.getPlayer1Score(), Matchers.is(board.getPlayer2Score()));
         }
-        assertThat(player1.getMoves(), Matchers.is(player1Moves));
-        log.info(String.format("%s moves performed by Player1. Score: %s. Pit: %s", player1.getMoves(),
-            player1.getScore(), JSONFormatter.serialize(board.getPlayer1Pits())));
-        assertThat(player2.getMoves(), Matchers.is(player2Moves));
-        log.info(String.format("%s moves performed by Player2. Score: %s. Pit: %s", player2.getMoves(),
-            player2.getScore(), JSONFormatter.serialize(board.getPlayer2Pits())));
+        assertThat(board.getPlayer1Moves(), Matchers.is(player1Moves));
+        log.info(String.format("%s moves performed by Player1. Score: %s. Pit: %s", board.getPlayer1Moves(),
+            board.getPlayer1Score(), JSONFormatter.serialize(board.getPlayer1Pits())));
+        assertThat(board.getPlayer2Moves(), Matchers.is(player2Moves));
+        log.info(String.format("%s moves performed by Player2. Score: %s. Pit: %s", board.getPlayer2Moves(),
+            board.getPlayer2Score(), JSONFormatter.serialize(board.getPlayer2Pits())));
     }
 
     /**

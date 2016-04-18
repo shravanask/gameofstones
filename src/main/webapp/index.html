@@ -399,63 +399,63 @@ body {
     
     function updatePointsTable(result) {
     	console.log('updating points table and board.. ' + JSON.stringify(result));
-	    	if(result) {
-	    	var player1 = result.player1;
-	    	if(player1) {
-	    		$('#player1Name').html(player1.name);
-	    		$('#player1Points').html(player1.score);
-	    		$('#player1Moves').html(player1.moves);
+    	if(result) {
+    		//update player1 points table
+	    	if(result.player1) {
+	    		$('#player1Name').html(result.player1.name);
 	    	}
-	    	var player2 = result.player2;
-	    	if(player2) {
-	    		$('#player2Name').html(player2.name);
-	    		$('#player2Points').html(player2.score);
-	    		$('#player2Moves').html(player2.moves);
+	    	$('#player1Points').html(result.player1Score);
+	    	//update player2 points table
+	    	if(result.player2) {
+	    		$('#player2Name').html(result.player2.name);
 	    	}
-	    	var board = result.board;
-	    	if(board){
-	    		$('#p11').prop('value', board.player1Pits[0]);
-	    		$('#p12').prop('value', board.player1Pits[1]);
-	    		$('#p13').prop('value', board.player1Pits[2]);
-	    		$('#p14').prop('value', board.player1Pits[3]);
-	    		$('#p15').prop('value', board.player1Pits[4]);
-	    		$('#p16').prop('value', board.player1Pits[5]);
-	    		$('#p17').html(board.player1Pits[6]);
-	    		//update player2 pit
-	    		$('#p21').prop('value', board.player2Pits[0]);
-	    		$('#p22').prop('value', board.player2Pits[1]);
-	    		$('#p23').prop('value', board.player2Pits[2]);
-	    		$('#p24').prop('value', board.player2Pits[3]);
-	    		$('#p25').prop('value', board.player2Pits[4]);
-	    		$('#p26').prop('value', board.player2Pits[5]);
-	    		$('#p27').html(board.player2Pits[6]);
-	    	}
-	    	var playState = result.playState;
-	    	if(playState) {
-	    		$('#playState').html(playState);
-	    		if(playState != 'IDLE') {
-	    			$('#abort').prop('disabled', false);
-	    		}
-	    		if(playState == "COMPLETED") {
-	    			var message = "";
-	    			if(board.player1Pits[6] > board.player2Pits[6]) {
-	    				message = player1.name + " has won the game!!";
-	    			}
-	    			else if(board.player1Pits[6] < board.player2Pits[6]) {
-	    				message = player2.name + " has won the game!!";
-	    			}
-	    			else {
-	    				message = "Close fight!! Its a draw.";
-	    			}
-	    			$('#lookUpMessage').html(message);
-	    			//show alert message to start a new game
-	    			var restartConfirmation = confirm("This game is over. Restart?");
-					if (restartConfirmation == true) {
-						clearPlay();
-					}
-	    		}
-	    	}
+	    	$('#player2Points').html(result.player2Score);
     	}
+    	var board = result.board;
+    	if(board){
+    		$('#player1Moves').html(board.player1Moves);
+    		$('#player2Moves').html(board.player2Moves);
+    		$('#p11').prop('value', board.player1Pits[0]);
+    		$('#p12').prop('value', board.player1Pits[1]);
+    		$('#p13').prop('value', board.player1Pits[2]);
+    		$('#p14').prop('value', board.player1Pits[3]);
+    		$('#p15').prop('value', board.player1Pits[4]);
+    		$('#p16').prop('value', board.player1Pits[5]);
+    		$('#p17').html(board.player1Pits[6]);
+    		//update player2 pit
+    		$('#p21').prop('value', board.player2Pits[0]);
+    		$('#p22').prop('value', board.player2Pits[1]);
+    		$('#p23').prop('value', board.player2Pits[2]);
+    		$('#p24').prop('value', board.player2Pits[3]);
+    		$('#p25').prop('value', board.player2Pits[4]);
+    		$('#p26').prop('value', board.player2Pits[5]);
+    		$('#p27').html(board.player2Pits[6]);
+    	}
+    	var playState = result.playState;
+    	if(playState) {
+    		$('#playState').html(playState);
+    		if(playState != 'IDLE') {
+    			$('#abort').prop('disabled', false);
+    		}
+    		if(playState == "COMPLETED") {
+    			var message = "";
+    			if(board.player1Pits[6] > board.player2Pits[6]) {
+    				message = result.player1.name + " has won the game!!";
+    			}
+    			else if(board.player1Pits[6] < board.player2Pits[6]) {
+    				message = result.player2.name + " has won the game!!";
+    			}
+    			else {
+    				message = "Close fight!! Its a draw.";
+    			}
+    			$('#lookUpMessage').html(message);
+    			//show alert message to start a new game
+    			var restartConfirmation = confirm("This game is over. Restart?");
+				if (restartConfirmation == true) {
+					clearPlay();
+				}
+    		}
+   		}
     }
     
     function showError(response) {
