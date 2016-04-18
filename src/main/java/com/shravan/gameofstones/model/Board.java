@@ -26,6 +26,8 @@ public class Board {
     private String id;
     private List<Integer> player1Pits;
     private List<Integer> player2Pits;
+    private Integer player1Moves = 0;
+    private Integer player2Moves = 0;
 
     //simple constructors
     public Board() {
@@ -86,6 +88,54 @@ public class Board {
             player2Pits.subList(0, 7);
         }
         this.player2Pits = player2Pits;
+    }
+
+    public Integer getPlayer1Moves() {
+
+        return player1Moves;
+    }
+
+    public void setPlayer1Moves(Integer player1Moves) {
+
+        this.player1Moves = player1Moves;
+    }
+
+    public Integer getPlayer2Moves() {
+
+        return player2Moves;
+    }
+
+    public void setPlayer2Moves(Integer player2Moves) {
+
+        this.player2Moves = player2Moves;
+    }
+
+    /**
+     * Simple method to fetch the number of stones in the big pit for player1
+     * 
+     * @return
+     */
+    @JsonIgnore
+    public Integer getPlayer1Score() {
+
+        if (player1Pits != null && player1Pits.size() == 7) {
+            return player1Pits.get(6);
+        }
+        return 0;
+    }
+    
+    /**
+     * Simple method to fetch the number of stones in the big pit for player2
+     * 
+     * @return
+     */
+    @JsonIgnore
+    public Integer getPlayer2Score() {
+
+        if (player2Pits != null && player2Pits.size() == 7) {
+            return player2Pits.get(6);
+        }
+        return 0;
     }
 
     /**
