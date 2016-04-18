@@ -93,6 +93,9 @@ public class Player {
 
     /**
      * Simple method to increment the move counter for this Player
+     * 
+     * @param updateDB
+     *            If true, it will persist the current instance to db
      */
     @JsonIgnore
     public void addMove(boolean updateDB) {
