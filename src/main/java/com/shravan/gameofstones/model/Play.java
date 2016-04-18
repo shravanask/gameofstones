@@ -194,30 +194,16 @@ public class Play {
         ObjectNode playNode = JSONFormatter.getMapper().valueToTree(this);
         //fetch board details
         Board board = getBoard();
-        playNode.putPOJO("board", board);
+        if (board != null) {
+            playNode.putPOJO("board", board);
+        }
         //fetch player details
         Player player1 = getPlayer1();
         Player player2 = getPlayer2();
-        if (board != null) {
-            //update the player scores only if there is a change
-            if (player1 != null && board.getPlayer1Pits() != null) { //null checks
-                //check if player1 score has changed
-                if (board.getPlayer1Pits().size() == 7 && board.getPlayer1Pits().get(6) != player1.getScore()) {
-                    player1.setScore(board.getPlayer1Pits().get(6));
-                    player1.createOrUpdate();
-                }
-            }
-            if (player2 != null && board.getPlayer2Pits() != null) { //null checks
-                if (board.getPlayer2Pits().size() == 7 && board.getPlayer2Pits().get(6) != player2.getScore()) {
-                    player2.setScore(board.getPlayer2Pits().get(6));
-                    player2.createOrUpdate();
-                }
-            }
-        }
-        if(player1 != null) {
+        if (player1 != null) {
             playNode.putPOJO("player1", player1);
         }
-        if(player2 != null) {
+        if (player2 != null) {
             playNode.putPOJO("player2", player2);
         }
         return playNode;
@@ -243,40 +229,10 @@ public class Play {
      */
     public static Play getPlay(String playId) {
 
-        Play play = null;
         if (playId != null) {
-            play = Mongodb.getInstance().getEntity("{_id: #}", Play.class, new ObjectId(playId));
-            //update play with leaderId if there are no stones left with any player
-            if (play != null) {
-                Board board = play.getBoard();
-                if (board != null) {
-                    //set play state
-                    if (board.isCompleted()) {
-                        play.setPlayState(PlayState.COMPLETED);
-                    }
-                    Boolean isPlayer1Winner = board.isPlayer1Leader();
-                    if (isPlayer1Winner != null) {
-                        //set play leaderId
-                        if (isPlayer1Winner) {
-                            play.leaderId = play.getPlayer1Id();
-                        }
-                        else {
-                            play.leaderId = play.getPlayer2Id();
-                        }
-                    }
-                    else {
-                        play.leaderId = null;
-                    }
-                    //update the play
-                    play.createOrUpdate();
-                }
-                else {
-                    log.severe(String.format("Play winner and state update failed. Board: %s is not found",
-                        play.getBoardId()));
-                }
-            }
+            return Mongodb.getInstance().getEntity("{_id: #}", Play.class, new ObjectId(playId));
         }
-        return play;
+        return null;
     }
 
     /**
@@ -367,14 +323,16 @@ public class Play {
      */
     public void makeMove(String playerId, Integer pitIndex) throws BadMoveException {
 
+        Board board = null;
         if (playerId != null) {
             //fetch the board in this play
-            Board board = Board.getBoard(boardId);
+            board = Board.getBoard(boardId);
+            Player player1 = getPlayer1();
+            Player player2 = getPlayer2();
             if (board != null) {
                 if (playerId.equalsIgnoreCase(player1Id)) {
                     isPlayer1sMove = board.makeMove(true, pitIndex);
                     //update player1 move counter
-                    Player player1 = getPlayer1();
                     if (player1 != null) {
                         player1.addMove(true);
                     }
@@ -385,7 +343,6 @@ public class Play {
                 else if (player2Id.equalsIgnoreCase(player2Id)) {
                     isPlayer1sMove = !board.makeMove(false, pitIndex);
                     //update player2 move counter
-                    Player player2 = getPlayer2();
                     if (player2 != null) {
                         player2.addMove(true);
                     }
@@ -393,6 +350,10 @@ public class Play {
                         log.severe(String.format("Player1: %s not found. Move count not updated", player2Id));
                     }
                 }
+                //check for playState and winner updates
+                updatePlayLeader(board);
+                //update player scores
+                updatePlayerScores(board, player1, player2);
             }
             else {
                 log.severe(
@@ -402,11 +363,62 @@ public class Play {
         else {
             log.severe("Cannot perform move. PlayerId is null. Ignoring move");
         }
-        createOrUpdate();
-        //check for playState and winner updates
-        Play play = getPlay(getId());
-        //update the current instance
-        this.leaderId = play.getLeaderId();
-        this.playState = play.getPlayState();
+    }
+
+    /**
+     * Update the player scores based on the given board
+     * 
+     * @param board
+     *            The board that is linked to the current players
+     */
+    private static void updatePlayerScores(Board board, Player player1, Player player2) {
+
+        if (board != null && player1 != null && player2 != null) {
+            //update the player scores only if there is a change
+            if (player1 != null && board.getPlayer1Pits() != null) { //null checks
+                //check if player1 score has changed
+                if (board.getPlayer1Pits().size() == 7 && board.getPlayer1Pits().get(6) != player1.getScore()) {
+                    player1.setScore(board.getPlayer1Pits().get(6));
+                    player1.createOrUpdate();
+                }
+            }
+            if (player2 != null && board.getPlayer2Pits() != null) { //null checks
+                if (board.getPlayer2Pits().size() == 7 && board.getPlayer2Pits().get(6) != player2.getScore()) {
+                    player2.setScore(board.getPlayer2Pits().get(6));
+                    player2.createOrUpdate();
+                }
+            }
+        }
+    }
+
+    /**
+     * Updates the playState and leader for this play based on the given board
+     * 
+     * @param board
+     *            The board that is linked to this play
+     */
+    private void updatePlayLeader(Board board) {
+
+        if (board != null) {
+            //set play state
+            if (board.isCompleted()) {
+                setPlayState(PlayState.COMPLETED);
+            }
+            Boolean isPlayer1Winner = board.isPlayer1Leader();
+            if (isPlayer1Winner != null) {
+                //set play leaderId
+                if (isPlayer1Winner) {
+                    leaderId = getPlayer1Id();
+                }
+                else {
+                    leaderId = getPlayer2Id();
+                }
+            }
+            else {
+                leaderId = null;
+            }
+            //update the play
+            createOrUpdate();
+        }
     }
 }

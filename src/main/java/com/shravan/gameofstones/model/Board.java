@@ -106,7 +106,7 @@ public class Board {
                 if (player1Pits.get(6) > player2Pits.get(6)) {
                     result = true;
                 }
-                if (player1Pits.get(6) == player2Pits.get(6)) {
+                else if (player1Pits.get(6) == player2Pits.get(6)) {
                     result = null;
                 }
                 else {
@@ -298,7 +298,9 @@ public class Board {
                     result = false;
                 }
                 //update the entity
-                createOrUpdate();
+                Board board = createOrUpdate();
+                this.player1Pits = board.player1Pits;
+                this.player2Pits = board.player2Pits;
             }
         }
         else {

@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
+import java.util.logging.Logger;
 import javax.ws.rs.core.Response.Status;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
@@ -25,6 +27,7 @@ import com.shravan.gameofstones.util.JSONFormatter;
  */
 public class PlayResourceTest extends TestFramework {
 
+    private static Logger log = Logger.getLogger(PlayResourceTest.class.getSimpleName());
     private String player1Id;
     private String player2Id;
     private String playId;
@@ -239,6 +242,44 @@ public class PlayResourceTest extends TestFramework {
     }
 
     /**
+     * Simple test to see if a sequence of automated moves for 10secs will end
+     * the game when all the moves are performed on the pit having the highest
+     * stones
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void automatedHighestStoneMoveTest() throws Exception {
+
+        automatedPlayerMovesTest(true, 10000);
+    }
+
+    /**
+     * Simple test to see if a sequence of automated moves for 10secs will end
+     * the game when all the moves are performed on the pit having the lowest
+     * stones
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void automatedLowestStoneMoveTest() throws Exception {
+
+        automatedPlayerMovesTest(false, 10000);
+    }
+
+    /**
+     * Simple test to see if a sequence of automated moves for 15secs will end
+     * the game when all the moves are performed on a randomly selected pit
+     * 
+     * @throws Exception
+     */
+    @Test
+    public void automatedRandomIndexMoveTest() throws Exception {
+
+        automatedPlayerMovesTest(null, 15000);
+    }
+
+    /**
      * Simple test to see if a player trying to make a move from a pit having
      * zero stones is not allowed.
      * 
@@ -296,19 +337,33 @@ public class PlayResourceTest extends TestFramework {
         assertThat(play.getPlayState(), Matchers.is(PlayState.IN_PROGRESS));
         Board board = play.getBoard();
 
-        //update player2 with no stones left in the small pits
-        List<Integer> player1Pits = board.getPlayer1Pits();
-        for (int pitIndex = 0; pitIndex < 6; pitIndex++) {
-            player1Pits.set(pitIndex, 0);
+        //based on who is playing next, move all but one stone to big pit
+        List<Integer> playerPits = null;
+        if(play.isPlayer1sMove()) {
+            playerPits = board.getPlayer1Pits();
         }
+        else {
+            playerPits = board.getPlayer2Pits();
+        }
+        //move all but one stone to the big pit
+        Integer pitStoneSum = 0;
+        for (int pitIndex = 0; pitIndex < 6; pitIndex++) {
+            pitStoneSum += playerPits.get(pitIndex);
+            playerPits.set(pitIndex, 0);
+        }
+        //keep one stone in the small pit 
+        playerPits.set(6, pitStoneSum + playerPits.get(6) -1);
+        playerPits.set(5, 1);
+        
         //update the board
         board.createOrUpdate();
 
-        //refetch the play with full details 
+        //make a move in the last small pit
+        new PlayResource().makeMove(playId, play.isPlayer1sMove() ? player1Id : player2Id, 5);
+        
         //validate that the play is updated with completed status and leaderId as player1
         play = Play.getPlay(playId);
         assertThat(play.getPlayState(), Matchers.is(PlayState.COMPLETED));
-        assertThat(play.getLeaderId(), Matchers.is(player2Id));
     }
 
     /**
@@ -381,5 +436,156 @@ public class PlayResourceTest extends TestFramework {
         //make sure that trying to make a move gives a 200 OK code
         RestResponse makeMoveResponse = new PlayResource().makeMove(playId, player1Id, 0);
         assertThat(makeMoveResponse.getCode(), Matchers.is(Status.OK.getStatusCode()));
+    }
+
+    //private methods
+
+    /**
+     * Run random moves for the given timefram, to see if there is a winner.
+     * When there is, see if the data is okay
+     * 
+     * @param pickHighestPitIndex
+     *            If true, the move will be performed on the the pit having the
+     *            highest stones. If false, move will be the pit having the
+     *            least stones. If null, a random index 0...5 will be chosen
+     * @param timeframeForTest
+     *            The timerange in milliseconds until which the moves must be
+     *            performed. If its greater than 20secs, it will be defaulted to
+     *            it.
+     * @throws Exception
+     */
+    private void automatedPlayerMovesTest(Boolean pickHighestPitIndex, long timeframeForTest) throws Exception {
+
+        //reset timeframe for test to a max of 20secs
+        timeframeForTest = timeframeForTest > 20000 ? 20000 : timeframeForTest;
+
+        //pick up from where it is left off. 
+        player1MakesSingleStoneMoveTest();
+        //load the game to see whose play its next
+        Play play = Play.getPlay(playId);
+        long startTimestamp = System.currentTimeMillis();
+        Integer player1Moves = Player.getPlayer(player1Id).getMoves();
+        Integer player2Moves = Player.getPlayer(player2Id).getMoves();
+        while (System.currentTimeMillis() - startTimestamp > 0) {
+            //make approprepriate move based on who has to play
+            Board board = play.getBoard();
+            if (play.isPlayer1sMove()) {
+                play = makeStonePitMove(pickHighestPitIndex, playId, player1Id, board.getPlayer1Pits());
+                player1Moves++;
+            }
+            else {
+                play = makeStonePitMove(pickHighestPitIndex, playId, player2Id, board.getPlayer2Pits());
+                player2Moves++;
+            }
+            //check if the play state, break if its completed
+            if (PlayState.COMPLETED.equals(play.getPlayState())) {
+                break;
+            }
+        }
+        //assert game statistics
+        Board board = play.getBoard();
+        if (PlayState.COMPLETED.equals(play.getPlayState())) {
+            //check that all stones are moved to big pit
+            for (int pitIndex = 0; pitIndex < 6; pitIndex++) {
+                assertThat(board.getPlayer1Pits().get(pitIndex), Matchers.is(0));
+                assertThat(board.getPlayer2Pits().get(pitIndex), Matchers.is(0));
+            }
+            //check that sum of all the stones in the big pits are equal to sum of all the stones in the board
+            assertThat(board.getPlayer1Pits().get(6) + board.getPlayer2Pits().get(6), Matchers.is(6 * 6 * 2));
+        }
+        else {
+            //check that all stones are not moved to big pit
+            Integer player1SmallPitSum = 0;
+            Integer player2SmallPitSum = 0;
+            for (int pitIndex = 0; pitIndex < 6; pitIndex++) {
+                player1SmallPitSum += board.getPlayer1Pits().get(pitIndex);
+                player2SmallPitSum += board.getPlayer2Pits().get(pitIndex);
+            }
+            assertThat(player1SmallPitSum, Matchers.greaterThan(0));
+            assertThat(player2SmallPitSum, Matchers.greaterThan(0));
+            //check that sum of all the stones in all the pits are equal to sum of all the stones in the board
+            assertThat((player1SmallPitSum + board.getPlayer1Pits().get(6)) +
+                (player2SmallPitSum + board.getPlayer2Pits().get(6)), Matchers.is(6 * 6 * 2));
+        }
+        //check that stones are in the big pit either cases, if the game is compeleted or not
+        assertThat(board.getPlayer1Pits().get(6), Matchers.not(0));
+        assertThat(board.getPlayer2Pits().get(6), Matchers.not(0));
+
+        Player player1 = play.getPlayer1();
+        Player player2 = play.getPlayer2();
+        //check if leader is updated either case, if the game is completed or not
+        if (board.getPlayer1Pits().get(6) > board.getPlayer2Pits().get(6)) {
+            assertThat(play.getLeaderId(), Matchers.is(player1Id));
+            //check player1 score is greater than player2
+            assertThat(player1.getScore(), Matchers.greaterThan(player2.getScore()));
+        }
+        else if (board.getPlayer1Pits().get(6) < board.getPlayer2Pits().get(6)) {
+            assertThat(play.getLeaderId(), Matchers.is(player2Id));
+            //check player2 score is greater than player1
+            assertThat(player2.getScore(), Matchers.greaterThan(player1.getScore()));
+        }
+        else {
+            assertThat(play.getLeaderId(), Matchers.nullValue());
+            //check player1 score is same as player2
+            assertThat(player1.getScore(), Matchers.is(player2.getScore()));
+        }
+        assertThat(player1.getMoves(), Matchers.is(player1Moves));
+        log.info(String.format("%s moves performed by Player1. Score: %s. Pit: %s", player1.getMoves(),
+            player1.getScore(), JSONFormatter.serialize(board.getPlayer1Pits())));
+        assertThat(player2.getMoves(), Matchers.is(player2Moves));
+        log.info(String.format("%s moves performed by Player2. Score: %s. Pit: %s", player2.getMoves(),
+            player2.getScore(), JSONFormatter.serialize(board.getPlayer2Pits())));
+    }
+
+    /**
+     * Make a move based on the given parameters
+     * 
+     * @param pickHighest
+     *            If true, make the move from the pit having the highest number
+     *            of stones
+     * @param playId
+     *            playId in play
+     * @param playerId
+     *            playerId of the player performing this move
+     * @param playerPits
+     *            The current pit of the given player making the move
+     * @return
+     */
+    private static Play makeStonePitMove(Boolean pickHighest, String playId, String playerId,
+        List<Integer> playerPits) {
+
+        Integer selectedPitIndex = 0;
+        //pick a random number between 0...5
+        if (pickHighest == null) {
+            selectedPitIndex = new Random().nextInt(6);
+        }
+        else {
+            //pick the pit with the highest stones
+            if (pickHighest) {
+                Integer previousPitStoneCount = Integer.MIN_VALUE;
+                for (int pitIndex = 0; pitIndex < 6; pitIndex++) {
+                    if (playerPits.get(pitIndex) > previousPitStoneCount) {
+                        previousPitStoneCount = playerPits.get(pitIndex);
+                        selectedPitIndex = pitIndex;
+                    }
+                }
+            }
+            //pick the pit with the least pit
+            else {
+                Integer previousPitStoneCount = Integer.MAX_VALUE;
+                for (int pitIndex = 0; pitIndex < 6; pitIndex++) {
+                    if (playerPits.get(pitIndex) < previousPitStoneCount) {
+                        previousPitStoneCount = playerPits.get(pitIndex);
+                        selectedPitIndex = pitIndex;
+                    }
+                }
+            }
+        }
+        //if the selected pit has zero stones, randomize it anyways
+        while (playerPits.get(selectedPitIndex) == 0) {
+            selectedPitIndex = new Random().nextInt(6);
+        }
+        new PlayResource().makeMove(playId, playerId, selectedPitIndex);
+        return Play.getPlay(playId);
     }
 }
