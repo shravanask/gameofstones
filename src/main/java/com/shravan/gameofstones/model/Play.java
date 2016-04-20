@@ -196,6 +196,8 @@ public class Play {
         Board board = getBoard();
         if (board != null) {
             playNode.putPOJO("board", board);
+            playNode.put("player1Score", board.getPlayer1Score());
+            playNode.put("player2Score", board.getPlayer2Score());
         }
         //fetch player details
         Player player1 = getPlayer1();
@@ -334,7 +336,7 @@ public class Play {
                     isPlayer1sMove = board.makeMove(true, pitIndex);
                     //update player1 move counter
                     if (player1 != null) {
-                        player1.addMove(true);
+                        board.setPlayer1Moves(board.getPlayer1Moves() + 1);
                     }
                     else {
                         log.severe(String.format("Player1: %s not found. Move count not updated", player1Id));
@@ -344,16 +346,16 @@ public class Play {
                     isPlayer1sMove = !board.makeMove(false, pitIndex);
                     //update player2 move counter
                     if (player2 != null) {
-                        player2.addMove(true);
+                        board.setPlayer2Moves(board.getPlayer2Moves() + 1);
                     }
                     else {
                         log.severe(String.format("Player1: %s not found. Move count not updated", player2Id));
                     }
                 }
+                //update the board
+                board.createOrUpdate();
                 //check for playState and winner updates
                 updatePlayLeader(board);
-                //update player scores
-                updatePlayerScores(board, player1, player2);
             }
             else {
                 log.severe(
@@ -362,32 +364,6 @@ public class Play {
         }
         else {
             log.severe("Cannot perform move. PlayerId is null. Ignoring move");
-        }
-    }
-
-    /**
-     * Update the player scores based on the given board
-     * 
-     * @param board
-     *            The board that is linked to the current players
-     */
-    private static void updatePlayerScores(Board board, Player player1, Player player2) {
-
-        if (board != null && player1 != null && player2 != null) {
-            //update the player scores only if there is a change
-            if (player1 != null && board.getPlayer1Pits() != null) { //null checks
-                //check if player1 score has changed
-                if (board.getPlayer1Pits().size() == 7 && board.getPlayer1Pits().get(6) != player1.getScore()) {
-                    player1.setScore(board.getPlayer1Pits().get(6));
-                    player1.createOrUpdate();
-                }
-            }
-            if (player2 != null && board.getPlayer2Pits() != null) { //null checks
-                if (board.getPlayer2Pits().size() == 7 && board.getPlayer2Pits().get(6) != player2.getScore()) {
-                    player2.setScore(board.getPlayer2Pits().get(6));
-                    player2.createOrUpdate();
-                }
-            }
         }
     }
 
