@@ -1,7 +1,7 @@
-<b>Instructions to run:<b><br>
-<b>Requirements:<b><br>
+<b>Instructions to run:</b><br>
+<b>Requirements:</b><br>
 Maven 3.x <br>
-<b>Commands:<b><br>
+<b>Commands:</b><br>
 cd /project-path/gameofstones/ <br>
 mvn jetty:run <br><br>
 Go to your browser (Only tested on Chrome) and go to http://localhost:8080
