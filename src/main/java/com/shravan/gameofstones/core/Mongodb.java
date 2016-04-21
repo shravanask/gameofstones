@@ -24,6 +24,8 @@ public class Mongodb {
     Logger log = Logger.getLogger(Mongodb.class.getSimpleName());
     public static boolean IS_TEST = false;
     private static String DB_NAME;
+    private static final String MONGO_HOST = "localhost";
+    private static final int MONGO_PORT = 27017;
 
     private Mongodb() {
         DB_NAME = IS_TEST ? "gameofstones-test" : "gameofstones";
@@ -39,10 +41,19 @@ public class Mongodb {
 
         mongodb = mongodb != null ? mongodb : new Mongodb();
         if (mongodb.jongo == null) {
-            DB db = new MongoClient("localhost", 27017).getDB(DB_NAME);
-            mongodb.jongo = new Jongo(db,
-                new JacksonMapper.Builder().registerModule(new JodaModule()).enable(MapperFeature.AUTO_DETECT_GETTERS)
-                                           .build());
+            try {
+                MongoClient mongoClient = new MongoClient(MONGO_HOST, MONGO_PORT);
+                //check to see if the client is connected
+                mongoClient.getDatabaseNames();
+                DB db = mongoClient.getDB(DB_NAME);
+                mongodb.jongo = new Jongo(db,
+                    new JacksonMapper.Builder().registerModule(new JodaModule())
+                                               .enable(MapperFeature.AUTO_DETECT_GETTERS).build());
+            }
+            //return null if connection to mongo fails
+            catch (Exception ex) {
+                return null;
+            }
         }
         return mongodb;
     }

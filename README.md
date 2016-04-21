@@ -1,3 +1,13 @@
+<b>Instructions to run:</b><br>
+<b>Requirements:</b><br>
+Maven 3.x <br>
+Mongo 3.x Server Running <br>
+The unit tests will also fail if there is no mongo server running locally. <br>
+<b>Commands:</b><br>
+cd /project-path/gameofstones/ <br>
+mvn jetty:run <br><br>
+Go to your browser (Only tested on Chrome) and go to http://localhost:8080
+
 ![alt tag](https://raw.githubusercontent.com/shravanask/gameofstones/master/src/main/webapp/static/GameOfStones.png)
 
 <b>Board Setup</b> <br>
