@@ -33,7 +33,7 @@ public class PlayResourceTest extends TestFramework {
     private String playId;
 
     /**
-     * Test is the play can be successfully started. Asserts if the {@link Play}
+     * Test is the play can be successfully started. Assertsx if the {@link Play}
      * entity is persisted with corresponding details
      * 
      * @throws Exception

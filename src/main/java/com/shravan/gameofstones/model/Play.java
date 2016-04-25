@@ -1,7 +1,9 @@
 package com.shravan.gameofstones.model;
 
+import java.io.IOException;
 import java.util.logging.Logger;
 import org.bson.types.ObjectId;
+import org.eclipse.jetty.websocket.api.Session;
 import org.jongo.marshall.jackson.oid.MongoId;
 import org.jongo.marshall.jackson.oid.MongoObjectId;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -282,6 +284,40 @@ public class Play {
     }
 
     /**
+     * Add a player to an existing or create a new play if missing
+     * 
+     * @param play
+     *            Information about the play the player is joining. If null,
+     *            creates a new play. Else, checks if there is atleast one slot
+     *            for the given player to join. So {@link Play#player1Id} or
+     *            {@link Play#player2Id} is null.
+     * @param player
+     *            Information about the player joining the given play
+     * @param session
+     *            Make a move and return the updated board via the socket
+     *            session
+     * @return Returns a {@link Play} that is setup between player1 and player2
+     */
+    public static Play addPlayerInPlay(Play play, Player player, Session session) {
+
+        Play playWithPlayerAdded = addPlayerInPlay(play, player);
+        if (session != null) {
+            synchronized (session) {
+                if (session.isOpen() && playWithPlayerAdded != null) {
+                    try {
+                        session.getRemote()
+                               .sendString(JSONFormatter.serialize(playWithPlayerAdded.getFullPlayDetails()));
+                    }
+                    catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+        return playWithPlayerAdded;
+    }
+
+    /**
      * Persist a game in the database
      * 
      * @param player1
@@ -364,6 +400,38 @@ public class Play {
         }
         else {
             log.severe("Cannot perform move. PlayerId is null. Ignoring move");
+        }
+    }
+
+    /**
+     * Execute a move performed by the Player. Updates this play too and also
+     * updates the linked session with the update full play details
+     * 
+     * @param playerId
+     *            PlayerId who is performing the move
+     * @param pitIndex
+     *            The 0-based pit index on which the Player is making his move
+     * @param session
+     *            Make a move and return the updated board via the socket
+     *            session
+     * @throws BadMoveException
+     *             This exception is thrown when attempting a bad move. E.g.
+     *             Playing at an index with 0 stones
+     */
+    public void makeMove(String playerId, Integer pitIndex, Session session) throws BadMoveException {
+
+        makeMove(playerId, pitIndex);
+        if (session != null) {
+            synchronized (session) {
+                if (session.isOpen()) {
+                    try {
+                        session.getRemote().sendString(JSONFormatter.serialize(getFullPlayDetails()));
+                    }
+                    catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
         }
     }
 

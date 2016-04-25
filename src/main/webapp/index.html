@@ -224,15 +224,17 @@ body {
         	console.log('playId '+ playId + ' given.')
         }
         if(localStorage.getItem("playId")) {
+        	//connect via sockets
+        	connectSocket(localStorage.getItem("playId"));
        		//fetch play details from server
-       		$.ajax({
+       		/* $.ajax({
                 url: "/rest/play/" + localStorage.getItem("playId"),
                 type: 'GET',
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
                 success: showResult,
                 error: showError
-            });
+            }); */
         }
         //when there are no players put Player1 as the playerName 
         else {
@@ -255,6 +257,7 @@ body {
         });
         //function for join a game
         $('#joinGame').click(function () {
+    		
         	$('#lookUpMessage').css("visibility", "visible");
             //check if player with this name is already present
             if(localStorage.getItem("player1Name") == $('#playerName').val()) {
@@ -262,7 +265,7 @@ body {
             			+ $('#playerName').val() + " is already used!");
             	return;
             }
-            var data = { "name": $('#playerName').val() };
+            var data = {"player": { "name": $('#playerName').val() }};
             var requestURL = "/rest/play/twoPlayer/player";
             var validRequest = false;
         	var localStorageConsole = {
@@ -294,9 +297,12 @@ body {
             else if(localStorage.getItem("player1Id") && localStorage.getItem("player2Id")){
                 $('#lookUpMessage').html("Play: " + localStorage.getItem("playId") + " already started!");
             }
-            if(validRequest) {
+    		//connect to the socket with the given playId if found
+    		connectSocket(localStorage.getItem("playId"));
+            if(validRequest && webSocket.readyState !== WebSocket.CLOSED) {
             	console.log('POSTing data: ' + JSON.stringify(data));
-	            $.ajax({
+            	send(data);
+	            /* $.ajax({
 	                url: requestURL,
 	                type: 'POST',
 	                data: JSON.stringify(data),
@@ -304,71 +310,9 @@ body {
 	                dataType: "json",
 	                success: showResult,
 	                error: showError
-	            });
+	            }); */
             }
         });
-        
-        function showResult(response) {
-        	
-        	console.log(JSON.stringify(response));
-        	//check if both players have joined!
-        	if(response.code == 200) {
-        		var result = JSON.parse(response.result);
-                //show the process message
-                $('#lookUpMessage').css("visibility", "visible");
-                if(result.player1Id) {
-                	var player1Name = result.player1Id;
-                	//try to print name
-                	if(result.player1 & result.player1.name) {
-                		player1Name = result.player1.name;
-                	}
-                	var message = "Player1: " + player1Name + " joined!";
-                	if(getUrlParameter("playId") == null) {
-                		message += " Invite url: "+ window.location.href + "?playId=" + result.id; 
-                	}
-                    $('#lookUpMessage').html(message);
-            	}
-            	if(result.player2Id) {
-                    $('#lookUpMessage').html("Game started!");
-                    $('#joinGame').prop('disabled', true);
-            	}
-            	else if(result.player1Id) {
-            		$('#playerName').val("Player 2");
-            	}
-            	if(result.id) {
-                	$('#abort').prop('disabled', false);
-            		localStorage.setItem("playId", result.id);
-            		if(result.player1Id) {
-		            	localStorage.setItem("player1Id", result.player1Id);
-		            	if(getPlayerName(result.player1)) {
-		            		$('#player1Name').html(getPlayerName(result.player1));
-		            		localStorage.setItem("player1Name", getPlayerName(result.player1));
-		            	}
-            		}
-            		if(result.player2Id) {
-		            	localStorage.setItem("player2Id", result.player2Id);
-		            	if(getPlayerName(result.player2)) {
-		            		$('#player2Name').html(getPlayerName(result.player2));
-		            		localStorage.setItem("player2Name", getPlayerName(result.player2));
-		            	}
-            		}
-            		if(result.playState) {
-            			$('#playState').html(result.playState);
-            			localStorage.setItem("playState", result.playState);
-            		}
-            		//update the points table
-            		updatePointsTable(result);
-            		if(result.playState != "COMPLETED") {
-            			//rotate the board if needed
-            			rotateBoard(result.isPlayer1sMove);
-            		}
-            	}
-        	}
-        	else if(response.code == 412) {
-        		console.log('Clearing local storage, no play fetched');
-        		localStorage.clear();
-        	}
-        }
         
         function getPlayerName(player) {
         	if(player && player.name) {
@@ -397,8 +341,65 @@ body {
 		console.log(window.location.href);
 	}
     
+    function showResult(response) {
+    	
+    	console.log(JSON.stringify(response));
+    	//check if both players have joined!
+    	/* if(response.code == 200) { */
+    		var result = JSON.parse(response);
+            //show the process message
+            $('#lookUpMessage').css("visibility", "visible");
+            if(result.player1Id) {
+            	var player1Name = result.player1Id;
+            	//try to print name
+            	if(result.player1 & result.player1.name) {
+            		player1Name = result.player1.name;
+            	}
+            	var message = "Player1: " + player1Name + " joined!";
+            	if(getUrlParameter("playId") == null) {
+            		message += " Invite url: "+ window.location.href + "?playId=" + result.id; 
+            	}
+                $('#lookUpMessage').html(message);
+        	}
+        	if(result.player2Id) {
+                $('#lookUpMessage').html("Game started!");
+                $('#joinGame').prop('disabled', true);
+        	}
+        	else if(result.player1Id) {
+        		$('#playerName').val("Player 2");
+        	}
+        	if(result.id) {
+            	$('#abort').prop('disabled', false);
+        		localStorage.setItem("playId", result.id);
+        		if(result.player1Id) {
+	            	localStorage.setItem("player1Id", result.player1Id);
+	            	if(getPlayerName(result.player1)) {
+	            		$('#player1Name').html(getPlayerName(result.player1));
+	            		localStorage.setItem("player1Name", getPlayerName(result.player1));
+	            	}
+        		}
+        		if(result.player2Id) {
+	            	localStorage.setItem("player2Id", result.player2Id);
+	            	if(getPlayerName(result.player2)) {
+	            		$('#player2Name').html(getPlayerName(result.player2));
+	            		localStorage.setItem("player2Name", getPlayerName(result.player2));
+	            	}
+        		}
+        		if(result.playState) {
+        			$('#playState').html(result.playState);
+        			localStorage.setItem("playState", result.playState);
+        		}
+        	}
+    	/* }
+    	else if(response.code == 412) {
+    		console.log('Clearing local storage, no play fetched');
+    		localStorage.clear();
+    	} */
+    }
+    
     function updatePointsTable(result) {
     	console.log('updating points table and board.. ' + JSON.stringify(result));
+    	
     	if(result) {
     		//update player1 points table
 	    	if(result.player1) {
@@ -537,6 +538,50 @@ body {
     		alreadyFlipped = !alreadyFlipped;
     	}
     }
+    var webSocket;
+    //socket connect
+    function connectSocket(playId) {
+		// oprn the connection if one does not exist
+		if (webSocket !== undefined
+				&& webSocket.readyState !== WebSocket.CLOSED) {
+			return;
+		}
+		// Create a websocket
+		var url = "ws://localhost:8080/playSocket";
+		if(playId) {
+			url += ("?playId" + playId);
+		} 
+		webSocket = new WebSocket(url);
+
+		webSocket.onopen = function(event) {
+			console.log("Connected!");
+		}
+
+		webSocket.onmessage = function(event) {
+			var result = JSON.parse(event.data);
+			console.log('socket received message: '+ event.data);
+			//update local storage and message divs
+			showResult(result)
+    		//update player pit
+    		updatePointsTable(result);
+    		//rotate board if necessary
+    		if(result.playState != "COMPLETED") {
+    			rotateBoard(result.isPlayer1sMove);
+    		}
+		}
+
+		webSocket.onclose = function(event) {
+			console.log("Connection Closed");
+		}
+    }
+    
+	function send(playDetails) {
+		webSocket.send(JSON.stringify(playDetails));
+	}
+
+	function closeSocket() {
+		webSocket.close();
+	}
     
     //make a move method
     function makeMove(isPlayer1, pitIndex) {
@@ -562,7 +607,17 @@ body {
    			$('#lookUpMessage').html('Making your move..');
    			var playerId = isPlayer1 == true ? localStorage.getItem("player1Id") 
    					: localStorage.getItem("player2Id");
-	    	$.ajax({
+   			
+   			//make a socket call
+   			if(webSocket.readyState !== WebSocket.CLOSED) {
+   				var playDetails = {
+   						"playId" : localStorage.getItem('playId'), 
+   						"playerId" : playerId, 
+   						"pitIndex" : pitIndex
+   						};
+   				send(playDetails); 
+   			}
+	    	/* $.ajax({
 	            url: '/rest/play/makeMove/' + localStorage.getItem('playId') + '/' + playerId + '/' + pitIndex,
 	            type: 'POST',
 	            contentType: "application/json; charset=utf-8",
@@ -572,18 +627,20 @@ body {
 	        });
 	    	
 	    	function successfulMove(response) {
+	    		
 	    		//set the global move flag to true when the move is successful
 	    		moveMade = true;
 	    		console.log(JSON.stringify(response));
 	        	if(response.code == 200) {
 	        		var result = JSON.parse(response.result);
 	        		var board = result.board;
-	        		//update player pit
-	        		updatePointsTable(result);
-	        		//rotate board if necessary
-	        		if(result.playState != "COMPLETED") {
-	        			rotateBoard(result.isPlayer1sMove);
-	        		}
+	        		//update player pit in other session browser
+	        		while(true) {
+            			if(webSocket.readyState == 1) {
+	            			webSocket.send(result.id);
+	            			break;
+            			}
+            		}
 	        	}
 	        	else if(response.code == 406) {
 	        		var message = response.message;
@@ -595,7 +652,7 @@ body {
 	        		}
 	        		$('#lookUpMessage').html(message);
 	        	}
-	    	}
+	    	} */
     	}
     }
 </script>
